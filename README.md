@@ -1,1 +1,4 @@
 # ReBite-Projeto-Integrador
+Este projeto se trata de um aplicativo para o Projeto Integrador do **Instituto Mauá de Tecnologia**.
+O aplicativo tem como objetivo o reaproveitamento de alimentos por meio da venda de produtos próximos à validade, com um desconto considerável, disponibilizados por estabelecimentos que comercializam produtos alimentícios.  Nossa intenção é também permitir a livre escolha de produtos dentro de um catálogo para o usuário, em vez de apenas oferecer a opção de sacolas surpresas.
+Enxergamos essa oportunidade porque os aplicativos já existentes são muito limitados em relação ao que pode ser comprado.
