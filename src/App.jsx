@@ -1,24 +1,35 @@
 import { useState } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import NavBar from "./components/NavBar";
 
+// AQUI SIM NÓS IMPORTAMOS AS PÁGINAS!
+import Inicio from "./pages/Inicio/index.jsx";
+import Sobre from "./pages/Sobre/index.jsx";
+import Login from "./pages/Login/index.jsx";
+import Footer from "./components/Footer.jsx";
+
 function App() {
-  // State
-  const [user, setUser] = useState({
-    id: 1,
-    name: "João",
-    hasEstablishment: false, // Verdadeiro ou Falso
-    role: "admin", // Isso aqui você vai usar depois!
-  });
+  const [user, setUser] = useState(null);
 
   return (
-    <div className="w-screen h-screen bg-slate-50">
-      <NavBar userType ={setUser} />
-      <button
-        className="text-white bg-slate-700 p-4 rounded-2xl"
-      >
-        Mudar para About
-      </button>
-    </div>
+    <BrowserRouter>
+      <div className="w-screen h-screen bg-slate-50">
+        
+        {/* A NavBar fica FORA do <Routes> porque ela aparece em todas as páginas */}
+        <NavBar user={user} />
+
+        {/* O <Routes> é o "palco" onde as páginas vão se revezar */}
+        <Routes>
+          <Route path="/" element={<Inicio />} />
+          
+          <Route path="/sobre" element={<Sobre />} />
+          
+          <Route path="/login" element={<Login />} />
+        </Routes>
+
+        <Footer />
+      </div>
+    </BrowserRouter>
   );
 }
 
