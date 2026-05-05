@@ -38,14 +38,10 @@ function verificarToken(req, res, next) {
   }
 }
 
-// ===== ROTAS DE AUTENTICAÇÃO =====
-
-// POST /auth/registro - Criar uma nova conta
 app.post('/auth/registro', async (req, res) => {
   try {
     const { nome, email, senha } = req.body;
 
-    // Validações básicas
     if (!nome || !email || !senha) {
       return res.status(400).json({ error: 'Nome, email e senha são obrigatórios' });
     }
@@ -54,7 +50,6 @@ app.post('/auth/registro', async (req, res) => {
       return res.status(400).json({ error: 'Senha deve ter no mínimo 6 caracteres' });
     }
 
-    // Criar usuário
     const usuario = await criarUsuario(nome, email, senha);
 
     res.status(201).json({
@@ -66,20 +61,16 @@ app.post('/auth/registro', async (req, res) => {
   }
 });
 
-// POST /auth/login - Fazer login
 app.post('/auth/login', async (req, res) => {
   try {
     const { email, senha } = req.body;
 
-    // Validações básicas
     if (!email || !senha) {
       return res.status(400).json({ error: 'Email e senha são obrigatórios' });
     }
 
-    // Autenticar usuário
     const usuario = await autenticarUsuario(email, senha);
 
-    // Gerar token JWT
     const token = jwt.sign(
       { id: usuario._id, email: usuario.email },
       JWT_SECRET,
@@ -96,12 +87,10 @@ app.post('/auth/login', async (req, res) => {
   }
 });
 
-// GET /auth/perfil/:id - Buscar dados do usuário
 app.get('/auth/perfil/:id', verificarToken, async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Verificar se o usuário está acessando seus próprios dados
     if (req.usuarioId !== id) {
       return res.status(403).json({ error: 'Acesso negado' });
     }
@@ -113,18 +102,15 @@ app.get('/auth/perfil/:id', verificarToken, async (req, res) => {
   }
 });
 
-// PUT /auth/perfil/:id - Atualizar dados do usuário
 app.put('/auth/perfil/:id', verificarToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { nome, email } = req.body;
 
-    // Verificar se o usuário está atualizando seus próprios dados
     if (req.usuarioId !== id) {
       return res.status(403).json({ error: 'Acesso negado' });
     }
 
-    // Validações básicas
     if (!nome || !email) {
       return res.status(400).json({ error: 'Nome e email são obrigatórios' });
     }
@@ -140,18 +126,15 @@ app.put('/auth/perfil/:id', verificarToken, async (req, res) => {
   }
 });
 
-// PUT /auth/senha/:id - Atualizar senha do usuário
 app.put('/auth/senha/:id', verificarToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { senhaAnterior, novaSenha } = req.body;
 
-    // Verificar se o usuário está alterando sua própria senha
     if (req.usuarioId !== id) {
       return res.status(403).json({ error: 'Acesso negado' });
     }
 
-    // Validações básicas
     if (!senhaAnterior || !novaSenha) {
       return res.status(400).json({ error: 'Senha anterior e nova senha são obrigatórias' });
     }
@@ -168,19 +151,16 @@ app.put('/auth/senha/:id', verificarToken, async (req, res) => {
   }
 });
 
-// Configuração do Multer para armazenamento local
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, './uploads'); // Pasta de destino
+    cb(null, './uploads');
   },
   filename: (req, file, cb) => {
-    // Renomear arquivo para algo único: timestamp + nome original
     const uniqueName = Date.now() + '-' + file.originalname;
     cb(null, uniqueName);
   }
 });
 
-// Filtro para aceitar apenas imagens
 const fileFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image/')) {
     cb(null, true);
@@ -193,19 +173,16 @@ const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024 // Limite de 5MB
+    fileSize: 5 * 1024 * 1024 
   }
 });
 
-// Rota para upload de imagem de produto
 app.post('/produtos/upload', upload.single('imagem'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Nenhuma imagem foi enviada' });
     }
 
-    // Aqui você pode salvar os dados do produto no banco
-    // Por exemplo, receber outros campos via req.body
     const { nome, descricao, preco, categoria } = req.body;
 
     if (!nome || !preco || !categoria) {
@@ -217,7 +194,7 @@ app.post('/produtos/upload', upload.single('imagem'), async (req, res) => {
       descricao,
       preco: parseFloat(preco),
       categoria,
-      imagem: req.file.filename // Salvar apenas o nome do arquivo
+      imagem: req.file.filename 
     });
 
     await produto.save();
