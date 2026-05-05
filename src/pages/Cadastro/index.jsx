@@ -1,13 +1,21 @@
 import loginImage from "../../assets/loginImage.png";
 import logoReBiteH from "../../assets/logoReBiteH.png";
 
-function Login() {
+{/* 
+    
+    Por enquanto a página de cadastro não tem nada a mais do que a página de login
+    Nos próximos commits, vou adicionar outros campos assim como etapas dentro do cadastro
+    
+    
+*/}
+
+function Cadastro() {
   return (
     // Contêiner do fundo
     <div className="h-[92%] w-full bg-slate-50 relative overflow-hidden flex items-center justify-center">
       <div className="absolute top-0 left-0 w-[45%] h-[150%] bg-[#f7b094] rounded-r-full -translate-y-40"></div>
 
-      {/* Formulário de Login */}
+      {/* Formulário de Cadastro */}
       <div className="relative z-10 flex w-full max-w-7xl p-6 items-center gap-8">
         <div className="w-[50%] flex justify-center">
           <img
@@ -17,7 +25,7 @@ function Login() {
           />
         </div>
 
-        {/* Formulário de Login */}
+        {/* Formulário de Cadastro */}
         <div className="w-[50%] flex justify-center">
           <div className="bg-white rounded-[2rem] shadow-xl p-10 w-full max-w-md">
             <img
@@ -26,7 +34,7 @@ function Login() {
               className="w-32 mb-4 items-center justify-center mx-auto"
             />
             <h2 className="text-2xl font-bold text-gray-800 mb-8 leading-tight">
-              Coloque suas informações
+              Crie sua conta
               <br />
               para entrar
             </h2>
@@ -39,7 +47,7 @@ function Login() {
                 </label>
                 <input
                   type="email"
-                  placeholder="Coloque o e-mail de sua preferência"
+                  placeholder="Coloque seu melhor e-mail"
                   className="w-full px-5 py-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F55D22]"
                 />
               </div>
@@ -58,9 +66,9 @@ function Login() {
 
               <div>
                 <p className="text-gray-600">
-                  Ainda não tem uma conta?{" "}
-                  <a href="/cadastro" className="text-[#F55D22] font-bold">
-                    Cadastre-se aqui!
+                  Já tem uma conta?{" "}
+                  <a href="/login" className="text-[#F55D22] font-bold">
+                    Faça login aqui!
                   </a>
                 </p>
               </div>
@@ -76,8 +84,12 @@ function Login() {
                 <button
                   type="submit"
                   className="w-1/2 py-3 bg-[#F55D22] text-white font-bold rounded-full hover:bg-[#ff4800] transition-colors"
+                  onClick={
+                    ()=> alert("Cadastro realizado com sucesso!")
+                    
+                  }
                 >
-                  Entrar
+                  Criar Conta
                 </button>
               </div>
             </form>
@@ -88,4 +100,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default Cadastro;
