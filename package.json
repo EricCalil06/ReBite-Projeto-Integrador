@@ -17,16 +17,12 @@
     "multer": "^1.4.5-lts.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-<<<<<<< HEAD
     "react-router-dom": "^7.14.2",
     "mongoose": "^8.0.0",
     "express": "^4.18.0",
     "multer": "^1.4.5-lts.1",
     "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.1.0"
-=======
-    "react-router-dom": "^7.14.2"
->>>>>>> 996c5b0645b5f3e91f325dbc30a980afd428554c
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
