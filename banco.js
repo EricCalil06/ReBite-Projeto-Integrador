@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 // Conexão com o MongoDB
 // Substitua pela sua string de conexão do MongoDB Atlas ou local
@@ -19,6 +20,26 @@ const usuarioSchema = new mongoose.Schema({
   senha: { type: String, required: true },
   dataCriacao: { type: Date, default: Date.now }
 });
+
+// Middleware para hash de senha antes de salvar
+usuarioSchema.pre('save', async function(next) {
+  // Se a senha não foi modificada, continuar
+  if (!this.isModified('senha')) return next();
+  
+  try {
+    // Gerar salt e hash da senha
+    const salt = await bcrypt.genSalt(10);
+    this.senha = await bcrypt.hash(this.senha, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Método para comparar senhas
+usuarioSchema.methods.compararSenha = async function(senhaDigitada) {
+  return await bcrypt.compare(senhaDigitada, this.senha);
+};
 
 // Schema para Conta
 const contaSchema = new mongoose.Schema({
@@ -66,38 +87,147 @@ const Transacao = mongoose.model('Transacao', transacaoSchema);
 const Produto = mongoose.model('Produto', produtoSchema);
 const Cliente = mongoose.model('Cliente', clienteSchema);
 
-// Exportar os modelos para uso em outros arquivos
+// ===== MÉTODOS DE AUTENTICAÇÃO =====
+
+// Função para criar um novo usuário (registro)
+async function criarUsuario(nome, email, senha) {
+  try {
+    // Verificar se o email já existe
+    const usuarioExistente = await Usuario.findOne({ email });
+    if (usuarioExistente) {
+      throw new Error('Email já está registrado');
+    }
+
+    // Criar novo usuário
+    const novoUsuario = new Usuario({
+      nome,
+      email,
+      senha
+    });
+
+    // Salvar no banco (o middleware de hash será executado)
+    await novoUsuario.save();
+
+    // Retornar usuário sem a senha
+    return {
+      _id: novoUsuario._id,
+      nome: novoUsuario.nome,
+      email: novoUsuario.email,
+      dataCriacao: novoUsuario.dataCriacao
+    };
+  } catch (error) {
+    throw new Error(`Erro ao criar usuário: ${error.message}`);
+  }
+}
+
+// Função para autenticar usuário (login)
+async function autenticarUsuario(email, senha) {
+  try {
+    // Buscar usuário pelo email
+    const usuario = await Usuario.findOne({ email });
+    if (!usuario) {
+      throw new Error('Email ou senha incorretos');
+    }
+
+    // Comparar senha
+    const senhaValida = await usuario.compararSenha(senha);
+    if (!senhaValida) {
+      throw new Error('Email ou senha incorretos');
+    }
+
+    // Retornar usuário sem a senha
+    return {
+      _id: usuario._id,
+      nome: usuario.nome,
+      email: usuario.email,
+      dataCriacao: usuario.dataCriacao
+    };
+  } catch (error) {
+    throw new Error(`Erro ao autenticar: ${error.message}`);
+  }
+}
+
+// Função para buscar usuário pelo ID
+async function buscarUsuarioPorId(usuarioId) {
+  try {
+    const usuario = await Usuario.findById(usuarioId);
+    if (!usuario) {
+      throw new Error('Usuário não encontrado');
+    }
+
+    return {
+      _id: usuario._id,
+      nome: usuario.nome,
+      email: usuario.email,
+      dataCriacao: usuario.dataCriacao
+    };
+  } catch (error) {
+    throw new Error(`Erro ao buscar usuário: ${error.message}`);
+  }
+}
+
+// Função para atualizar dados do usuário
+async function atualizarUsuario(usuarioId, dados) {
+  try {
+    const usuarioAtualizado = await Usuario.findByIdAndUpdate(
+      usuarioId,
+      { nome: dados.nome, email: dados.email },
+      { new: true, runValidators: true }
+    );
+
+    if (!usuarioAtualizado) {
+      throw new Error('Usuário não encontrado');
+    }
+
+    return {
+      _id: usuarioAtualizado._id,
+      nome: usuarioAtualizado.nome,
+      email: usuarioAtualizado.email,
+      dataCriacao: usuarioAtualizado.dataCriacao
+    };
+  } catch (error) {
+    throw new Error(`Erro ao atualizar usuário: ${error.message}`);
+  }
+}
+
+// Função para atualizar senha
+async function atualizarSenha(usuarioId, senhaAnterior, novaSenha) {
+  try {
+    const usuario = await Usuario.findById(usuarioId);
+    if (!usuario) {
+      throw new Error('Usuário não encontrado');
+    }
+
+    // Verificar se a senha anterior está correta
+    const senhaValida = await usuario.compararSenha(senhaAnterior);
+    if (!senhaValida) {
+      throw new Error('Senha anterior incorreta');
+    }
+
+    // Atualizar senha
+    usuario.senha = novaSenha;
+    await usuario.save();
+
+    return { mensagem: 'Senha atualizada com sucesso' };
+  } catch (error) {
+    throw new Error(`Erro ao atualizar senha: ${error.message}`);
+  }
+}
+
+// Exportar os modelos e funções de autenticação
 module.exports = {
   Usuario,
   Conta,
   Transacao,
   Produto,
-  Cliente
+  Cliente,
+  // Funções de autenticação
+  criarUsuario,
+  autenticarUsuario,
+  buscarUsuarioPorId,
+  atualizarUsuario,
+  atualizarSenha
 };
-
-// Exemplo de uso básico (descomente para testar)
-// async function exemplo() {
-//   try {
-//     // Criar um usuário
-//     const usuario = new Usuario({
-//       nome: 'João Silva',
-//       email: 'joao@example.com',
-//       senha: 'senha123'
-//     });
-//     await usuario.save();
-//     console.log('Usuário criado:', usuario);
-
-//     // Criar uma conta
-//     const conta = new Conta({
-//       usuarioId: usuario._id,
-//       numeroConta: '12345-6',
-//       saldo: 1000
-//     });
-//     await conta.save();
-//     console.log('Conta criada:', conta);
-
-//   } catch (error) {
-//     console.error('Erro:', error);
 //   }
 // }
 

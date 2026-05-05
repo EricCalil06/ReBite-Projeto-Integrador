@@ -1,16 +1,172 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
-const { Produto } = require('./banco'); // Importar o modelo Produto
+const jwt = require('jsonwebtoken');
+const { 
+  Produto,
+  criarUsuario,
+  autenticarUsuario,
+  buscarUsuarioPorId,
+  atualizarUsuario,
+  atualizarSenha
+} = require('./banco'); // Importar modelos e funções
 
 const app = express();
 const PORT = 3000;
+const JWT_SECRET = 'sua_chave_secreta_aqui'; // Mude para uma chave segura em produção
 
 // Middleware para parsing JSON
 app.use(express.json());
 
 // Servir arquivos estáticos da pasta uploads
 app.use('/uploads', express.static('uploads'));
+
+// Middleware para verificar JWT
+function verificarToken(req, res, next) {
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ error: 'Token não fornecido' });
+  }
+
+  try {
+    const decodificado = jwt.verify(token, JWT_SECRET);
+    req.usuarioId = decodificado.id;
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: 'Token inválido' });
+  }
+}
+
+// ===== ROTAS DE AUTENTICAÇÃO =====
+
+// POST /auth/registro - Criar uma nova conta
+app.post('/auth/registro', async (req, res) => {
+  try {
+    const { nome, email, senha } = req.body;
+
+    // Validações básicas
+    if (!nome || !email || !senha) {
+      return res.status(400).json({ error: 'Nome, email e senha são obrigatórios' });
+    }
+
+    if (senha.length < 6) {
+      return res.status(400).json({ error: 'Senha deve ter no mínimo 6 caracteres' });
+    }
+
+    // Criar usuário
+    const usuario = await criarUsuario(nome, email, senha);
+
+    res.status(201).json({
+      mensagem: 'Usuário criado com sucesso',
+      usuario
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// POST /auth/login - Fazer login
+app.post('/auth/login', async (req, res) => {
+  try {
+    const { email, senha } = req.body;
+
+    // Validações básicas
+    if (!email || !senha) {
+      return res.status(400).json({ error: 'Email e senha são obrigatórios' });
+    }
+
+    // Autenticar usuário
+    const usuario = await autenticarUsuario(email, senha);
+
+    // Gerar token JWT
+    const token = jwt.sign(
+      { id: usuario._id, email: usuario.email },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      mensagem: 'Login realizado com sucesso',
+      token,
+      usuario
+    });
+  } catch (error) {
+    res.status(401).json({ error: error.message });
+  }
+});
+
+// GET /auth/perfil/:id - Buscar dados do usuário
+app.get('/auth/perfil/:id', verificarToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Verificar se o usuário está acessando seus próprios dados
+    if (req.usuarioId !== id) {
+      return res.status(403).json({ error: 'Acesso negado' });
+    }
+
+    const usuario = await buscarUsuarioPorId(id);
+    res.json(usuario);
+  } catch (error) {
+    res.status(404).json({ error: error.message });
+  }
+});
+
+// PUT /auth/perfil/:id - Atualizar dados do usuário
+app.put('/auth/perfil/:id', verificarToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nome, email } = req.body;
+
+    // Verificar se o usuário está atualizando seus próprios dados
+    if (req.usuarioId !== id) {
+      return res.status(403).json({ error: 'Acesso negado' });
+    }
+
+    // Validações básicas
+    if (!nome || !email) {
+      return res.status(400).json({ error: 'Nome e email são obrigatórios' });
+    }
+
+    const usuarioAtualizado = await atualizarUsuario(id, { nome, email });
+
+    res.json({
+      mensagem: 'Usuário atualizado com sucesso',
+      usuario: usuarioAtualizado
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// PUT /auth/senha/:id - Atualizar senha do usuário
+app.put('/auth/senha/:id', verificarToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { senhaAnterior, novaSenha } = req.body;
+
+    // Verificar se o usuário está alterando sua própria senha
+    if (req.usuarioId !== id) {
+      return res.status(403).json({ error: 'Acesso negado' });
+    }
+
+    // Validações básicas
+    if (!senhaAnterior || !novaSenha) {
+      return res.status(400).json({ error: 'Senha anterior e nova senha são obrigatórias' });
+    }
+
+    if (novaSenha.length < 6) {
+      return res.status(400).json({ error: 'Nova senha deve ter no mínimo 6 caracteres' });
+    }
+
+    const resultado = await atualizarSenha(id, senhaAnterior, novaSenha);
+
+    res.json(resultado);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
 
 // Configuração do Multer para armazenamento local
 const storage = multer.diskStorage({
