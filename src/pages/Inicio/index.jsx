@@ -46,7 +46,11 @@ function Inicio() {
     <div className="min-h-screen bg-white font-sans text-gray-900">
       <section className="max-w-6xl mx-auto px-6 py-16 flex flex-col md:flex-row items-center justify-between gap-12">
         <div className="w-full md:w-1/2 flex justify-center">
-          <img src={imagemPosterInicio} alt="Poster Início" />
+          <img 
+          src={imagemPosterInicio} 
+          alt="Poster Início" 
+          className="drop-shadow-xl hover:scale-105 transition-transform duration-500"
+          />
         </div>
 
         {/* SEÇÃO: PRINCIPAL */}
@@ -70,7 +74,7 @@ function Inicio() {
         </div>
       </section>
 
-      {/* 2. SEÇÃO: EXPLORE NOVAS OPÇÕES */}
+      {/* SEÇÃO: EXPLORE NOVAS OPÇÕES */}
       <section className="max-w-4xl mx-auto px-6 py-8 text-center">
         <h2 className="text-2xl font-bold mb-6">Explore novas opções:</h2>
         <div className="flex flex-col sm:flex-row justify-center gap-12">
@@ -170,7 +174,7 @@ function Inicio() {
               Garanta sua comida pelo{" "}
               <span className="text-orange-500 font-bold">APP</span> com{" "}
               <span className="text-orange-500 font-bold uppercase">
-                descontassos
+                descontaços
               </span>
             </p>
           </div>

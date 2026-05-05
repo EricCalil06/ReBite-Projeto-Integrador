@@ -56,6 +56,15 @@ function Login() {
                 />
               </div>
 
+              <div>
+                <p className="text-gray-600">
+                  Ainda não tem uma conta?{" "}
+                  <a href="/cadastro" className="text-[#F55D22] font-bold">
+                    Cadastre-se aqui!
+                  </a>
+                </p>
+              </div>
+
               {/* Botões */}
               <div className="flex gap-6 mt-6">
                 <button
