@@ -38,11 +38,10 @@ app.listen(PORT, () => {
 });
 
 
-// CONEXÃO COM O BANCO DE DADOS
-async function conectarAoMongo() {
-  await mongoose.connect(`mongodb+srv://ReBite:ReBite123@rebite.tikxyyj.mongodb.net/?appName=ReBite`)
-}
-//mongodb+srv://ReBite:ReBite123@rebite.tikxyyj.mongodb.net/?appName=ReBite
+const mongoURI = process.env.MONGO_URI;
+mongoose.connect(mongoURI)
+  .then(() => console.log("✅ Conectado ao MongoDB com .env"))
+  .catch((err) => console.error("❌ Erro ao conectar:", err));
 
 // SEED HYPERLINKS
 async function seedHyperlinks() {
