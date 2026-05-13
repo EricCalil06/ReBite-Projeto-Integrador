@@ -1,4 +1,3 @@
-//import fsExtra from 'fs-extra';
 import fs from 'fs';
 import path from 'path';
 import unzipper from 'unzipper';

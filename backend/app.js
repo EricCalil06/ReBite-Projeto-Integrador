@@ -9,8 +9,6 @@ import path from 'path';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-// 2. Importação dos modelos (Adicione o .js no final dos caminhos)
-// No padrão "type: module", a extensão .js é obrigatória em importações locais
 import Subtopico from './models/subtopicos.js';
 import ImagemModel from './models/imagemModel.js';
 import Informacao from './models/informacao.js';
@@ -23,7 +21,6 @@ import hyperlink from './models/hyperlink.js';
 
 
 import { fileURLToPath } from 'url';
-// Recriando o __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -40,18 +37,18 @@ app.listen(PORT, () => {
 async function conectarAoMongo() {
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    console.log("✅ Conectado ao MongoDB com sucesso!");
+    console.log("Conectado ao MongoDB com sucesso!");
   } catch (error) {
-    console.error("❌ Erro ao conectar ao Mongo:", error);
+    console.error("Erro ao conectar ao Mongo:", error);
   }
 }
 
 const mongoURI = process.env.MONGO_URI;
 mongoose.connect(mongoURI)
-  .then(() => console.log("✅ Conectado ao MongoDB com .env"))
-  .catch((err) => console.error("❌ Erro ao conectar:", err));
+  .then(() => console.log("Conectado ao MongoDB com .env"))
+  .catch((err) => console.error("Erro ao conectar:", err));
 
-// SEED HYPERLINKS
+// seed hyperlinks
 async function seedHyperlinks() {
   try {
     const hyperlinksData = [
@@ -67,14 +64,14 @@ async function seedHyperlinks() {
       if (!existe) {
         const novo = new hyperlink(hl);
         await novo.save();
-        console.log(`✓ Hyperlink seed: Criado ${hl.nome}`);
+        console.log(`Hyperlink seed: Criado ${hl.nome}`);
       } else {
-        console.log(`⊘ Hyperlink seed: Já existe ${hl.nome}`);
+        console.log(`Hyperlink seed: Já existe ${hl.nome}`);
       }
     }
-    console.log('✓ Seed de hyperlinks concluído');
+    console.log('Seed de hyperlinks concluído');
   } catch (error) {
-    console.error('✗ Erro ao fazer seed de hyperlinks:', error.message);
+    console.error('Erro ao fazer seed de hyperlinks:', error.message);
   }
 }
 
@@ -590,9 +587,6 @@ app.get('/tiles/:imageId/status', async (req, res) => {
 app.post('/signup', async (req, res) => {
   try {
     const { email, senha, cargo } = req.body;
-
-    // Removida a verificação do .endsWith('@fmabc.net')
-
     const usuario = new Usuario({ 
       email: email, 
       senha: senha, 
@@ -600,7 +594,7 @@ app.post('/signup', async (req, res) => {
     });
 
     const respMongo = await usuario.save();
-    console.log("✅ Usuário criado:", respMongo);
+    console.log("Usuário criado:", respMongo);
     res.status(201).json(respMongo); // Adicionei o JSON no retorno para facilitar o teste
   } catch (erro) {
     res.status(409).json({ error: erro.message });
@@ -764,7 +758,7 @@ app.get('/debug', (req, res) => {
 if (process.env.NODE_ENV !== 'test') {
   conectarAoMongo()
     .then(async () => {
-      console.log('✓ Conectado ao MongoDB');
+      console.log('Conectado ao MongoDB');
       await seedHyperlinks();
     })
     .catch(err => console.log("Erro conexão Mongo:", err))

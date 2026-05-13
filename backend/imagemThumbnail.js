@@ -3,7 +3,6 @@ import path from 'path';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 
-// Se você quiser manter o nome exatamente como estava:
 const execFileAsync = promisify(execFile);
 
 class ImagemThumbnail {
