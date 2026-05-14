@@ -584,7 +584,7 @@ app.get('/tiles/:imageId/status', async (req, res) => {
 // FIM DO CÓDIGO PARA EXIBIR OS TILES ----------------------------------------------------
 
 // CRUD DE USUÁRIOS! ---------------------------------------------------------------------
-app.post('/signup', async (req, res) => {
+app.post('/cadastro', async (req, res) => {
   try {
     const { email, senha, cargo } = req.body;
     const usuario = new Usuario({ 
@@ -595,34 +595,11 @@ app.post('/signup', async (req, res) => {
 
     const respMongo = await usuario.save();
     console.log("Usuário criado:", respMongo);
-    res.status(201).json(respMongo); // Adicionei o JSON no retorno para facilitar o teste
+    res.status(201).json(respMongo); 
   } catch (erro) {
     res.status(409).json({ error: erro.message });
   }
 });
-// app.post('/signup', async (req, res) => {
-//   try {
-//     const email = req.body.email;
-//     const senha = req.body.senha;
-//     const cargo = req.body.cargo;
-
-//     if (!email.endsWith('@fmabc.net')) {
-//       return res.status(403).json({ message: 'Apenas e-mails @fmabc.net são permitidos.' });
-//     }
-
-//     const usuario = new Usuario({ 
-//       email: email, 
-//       senha: senha, 
-//       cargo: cargo 
-//     });
-
-//     const respMongo = await usuario.save();
-//     console.log(respMongo)
-//     res.status(201).end()
-//   } catch (erro) {
-//     res.status(409).json({ error: erro.message });
-//   }
-// });
 
 app.post('/login', async (req, res) => {
   const email = req.body.email;
@@ -648,61 +625,6 @@ app.post('/login', async (req, res) => {
 
   res.status(200).json({ token: token, cargo: usuarioExiste.cargo, id: usuarioExiste._id });
 });
-
-// app.get('/usuarios', async (req, res) => {
-//   try {
-
-//     const usuarios = await Usuario.find().sort({
-//       cargo: 1,
-//       email: 1
-//     });
-
-//     res.status(200).json(usuarios);
-//   } catch (erro) {
-//     res.status(500).json({ message: erro.message })
-//   }
-
-// });
-
-// app.get('/usuario/:id', async (req, res) => {
-//   try {
-//     const usuario = await Usuario.findById(req.params.id)
-
-//     if (!usuario) return res.status(404).json({ message: 'Usuário não encontrado' })
-
-//     res.status(200).json(usuario)
-//   } catch (erro) {
-//     res.status(500).json({ message: erro.message })
-//   }
-// });
-
-// app.put('/usuario/:id', async (req, res) => {
-//   try {
-//     const usuario = await Usuario.findByIdAndUpdate(req.params.id, req.body, { new: true })
-
-//     if (!usuario) {
-//       return res.status(404).json({ message: 'Usuário não encontrado' })
-//     }
-
-//     res.json(usuario)
-//   } catch (err) {
-//     res.status(400).json({ message: err.message })
-//   }
-// })
-
-// app.delete('/usuario/:id', async (req, res) => {
-//   try {
-//     const usuario = await Usuario.findByIdAndDelete(req.params.id);
-
-//     if (!usuario) {
-//       return res.status(404).json({ message: 'Usuário não encontrado' })
-//     }
-
-//     res.json({ message: 'Informação removida' })
-//   } catch (erro) {
-//     res.status(400).json({})
-//   }
-// });
 
 // // Crud Hyperlinks
 // app.post('/hyperlink', async (req, res) => {
