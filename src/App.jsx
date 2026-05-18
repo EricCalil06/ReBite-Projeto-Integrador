@@ -7,6 +7,7 @@ import Sobre from "./pages/Sobre/index.jsx";
 import Login from "./pages/Login/index.jsx";
 import Cadastro from "./pages/Cadastro/index.jsx";
 import Footer from "./components/Footer.jsx";
+import PaginaLojista from "./pages/PaginaParaLojistas/index.jsx"
 
 function App() {
   const [user, setUser] = useState(null);
@@ -24,6 +25,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           
           <Route path="/cadastro" element={<Cadastro />} />
+
+          <Route path="/cadastro-lojista" element={<PaginaLojista />}/>
         </Routes>
 
         <Footer />

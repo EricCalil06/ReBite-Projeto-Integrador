@@ -3,6 +3,7 @@ import MainSection from "./mainSection";
 import CardsSection from "./cardsSection";
 import BannerSection from "./bannerSection";
 import HowItWorksSection from "./howItWorksSection";
+import CardsCTA from "./cardsCTA";
 
 function Inicio() {
   // Lógica para fazer o FAQ abrir e fechar
@@ -56,10 +57,14 @@ function Inicio() {
       {/* Substituir o banner futuramente para uma imagem que fica de fundo e colocar textos por cima para fazer a animação do numero 55 crescendo */}
       <BannerSection />
 
-      {/* 4. SEÇÃO: COMO FUNCIONA? */}
+      {/* 4. Cards CTA*/}
+      {/* Cards que chamam os clientes para dentro do APP tanto como lojista quanto como usuário */}
+      <CardsCTA />
+
+      {/* 5. SEÇÃO: COMO FUNCIONA? */}
       <HowItWorksSection />
-      
-      {/* 5. FAQ */}
+
+      {/* 6. FAQ */}
       <section className="max-w-4xl mx-auto px-6 py-16">
         <div className="mb-8">
           <h2 className="text-3xl font-bold mb-2">Precisa de ajuda?</h2>
