@@ -673,6 +673,49 @@ app.post('/login', async (req, res) => {
 //     res.status(500).json({ message: err.message })
 //   }
 // })
+import Produto from './models/produto.js';
+
+// CREATE: Cadastrar produto atrelado ao vendedor
+app.post('/produtos', async (req, res) => {
+    try {
+        const { nome, preco, quantidade, vendedorId } = req.body;
+        const novoProduto = new Produto({ nome, preco, quantidade, vendedorId });
+        await novoProduto.save();
+        res.status(201).json(novoProduto);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// READ: Listar apenas os produtos do vendedor logado
+app.get('/produtos/vendedor/:vendedorId', async (req, res) => {
+    try {
+        const produtos = await Produto.find({ vendedorId: req.params.vendedorId });
+        res.status(200).json(produtos);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// UPDATE: Editar dados do produto
+app.put('/produtos/:id', async (req, res) => {
+    try {
+        const produtoAtualizado = await Produto.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.status(200).json(produtoAtualizado);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// DELETE: Remover produto da sacola
+app.delete('/produtos/:id', async (req, res) => {
+    try {
+        await Produto.findByIdAndDelete(req.params.id);
+        res.status(200).json({ message: "Produto removido com sucesso!" });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
 app.get('/debug', (req, res) => {
     res.json({ mensagem: "Servidor vivo na porta 5500!" });
 });

@@ -8,6 +8,7 @@ import Login from "./pages/Login/index.jsx";
 import Cadastro from "./pages/Cadastro/index.jsx";
 import Footer from "./components/Footer.jsx";
 import PaginaLojista from "./pages/PaginaParaLojistas/index.jsx"
+import Sacola from './pages/PaginaParaLojistas/sacola'; 
 
 function App() {
   const [user, setUser] = useState(null);
@@ -27,6 +28,8 @@ function App() {
           <Route path="/cadastro" element={<Cadastro />} />
 
           <Route path="/cadastro-lojista" element={<PaginaLojista />}/>
+
+          <Route path="/sacola" element={<Sacola />} />
         </Routes>
 
         <Footer />

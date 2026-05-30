@@ -31,7 +31,7 @@ function Login() {
 
         //alert("Login realizado com sucesso!");
         
-        navigate("/debug");
+        navigate("/sacola");
       } else {
         alert(data.mensagem || "Erro ao fazer login");
       }
