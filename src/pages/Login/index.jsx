@@ -22,16 +22,40 @@ function Login() {
 
       const data = await response.json();
 
+      // ... dentro da função handleLogin no seu Login.jsx
       if (response.ok) {
         console.log("Sucesso:", data);
 
+        // Guarda as informações de sessão essenciais
         localStorage.setItem("token", data.token);
         localStorage.setItem("cargo", data.cargo);
         localStorage.setItem("usuarioId", data.id);
 
-        //alert("Login realizado com sucesso!");
-        
-        navigate("/sacola");
+        // NOVO: Verifica se o Administrador Lojista já possui uma loja associada
+        if (data.email === "B@B.com" || data.cargo === "admin") {
+          try {
+            const resLoja = await fetch("http://localhost:5500/estabelecimento/checar", {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                "x-usuario-id": data.id // Envia o ID do admin logado
+              }
+            });
+
+            const dadosLoja = await resLoja.json();
+
+            if (dadosLoja.existe) {
+              navigate("/painel-loja"); // Já tem loja, vai direto pro painel
+            } else {
+              navigate("/cadastrar-loja"); // Não tem loja, vai cadastrar
+            }
+          } catch (err) {
+            console.error("Erro ao checar estabelecimento:", err);
+            navigate("/cadastrar-loja");
+          }
+        } else {
+          navigate("/pagina-cliente");
+        }
       } else {
         alert(data.mensagem || "Erro ao fazer login");
       }

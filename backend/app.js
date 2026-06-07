@@ -18,7 +18,10 @@ import Estatisticas from './models/estatisticas.js';
 import ImagemThumbnail from './imagemThumbnail.js';
 import Imagem from './imagem.js';
 import hyperlink from './models/hyperlink.js';
-
+import Estabelecimento from './models/estabelecimento.js';
+import Funcionario from './models/funcionario.js';
+import Produto from './models/produto.js';
+import Denuncia from './models/denuncia.js';
 
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
@@ -74,6 +77,22 @@ async function seedHyperlinks() {
     console.error('Erro ao fazer seed de hyperlinks:', error.message);
   }
 }
+
+app.get('/produtos', async (req, res) => {
+    try {
+        const estId = req.headers['x-estabelecimento-id']; 
+        
+        let filtro = {};
+        if (estId) {
+            filtro = { estabelecimentoId: estId };
+        }
+
+        const produtos = await mongoose.model('Produto').find(filtro);
+        res.status(200).json(produtos);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 
 // CRUD VISITANTES -----------------------------------------------------------------------------------------------
 
@@ -484,9 +503,6 @@ app.delete('/images/:id', async (req, res) => {
   }
 });
 
-//Código para acessar os arquivos na pasta uploads a partir de uma url
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
 // FIM CRUD DE IMAGENS! ------------------------------------------------------------------
 
 // CÓDIGO PARA EXIBIR OS TILES -----------------------------------------------------------
@@ -626,66 +642,155 @@ app.post('/login', async (req, res) => {
   res.status(200).json({ token: token, cargo: usuarioExiste.cargo, id: usuarioExiste._id });
 });
 
-// // Crud Hyperlinks
-// app.post('/hyperlink', async (req, res) => {
-//   try {
-//     const novoHyperlink = new hyperlink(req.body)
-//     await novoHyperlink.save()
-//     res.status(201).json(novoHyperlink)
-//   } catch (err) {
-//     res.status(400).json({ message: err.message })
-//   }
-// })
+async function obterEstabelecimento(req, res, next) {
+    const donoId = req.headers['x-usuario-id'];
+    if (!donoId) return res.status(401).json({ error: "Usuário não identificado." });
+    
+    let est = await Estabelecimento.findOne({ donoId });
+    if (!est) {
+        // Cria um provisório se o Admin não tiver para não quebrar o fluxo
+        est = new Estabelecimento({ nome: "Meu Estabelecimento Provisório", donoId });
+        await est.save();
+    }
+    req.estabelecimentoId = est._id;
+    next();
+}
 
-// app.get('/hyperlink', async (req, res) => {
-//   try {
-//     const hyperlinks = await hyperlink.find()
-//     res.json(hyperlinks)
-//   } catch (err) {
-//     res.status(500).json({ message: err.message })
-//   }
-// })
-
-// app.get('/hyperlink/:id', async (req, res) => {
-//   try {
-//     const hyperlinks = await hyperlink.findById(req.params.id)
-//     if (!hyperlinks) return res.status(404).json({ message: 'Não encontrado' })
-//     res.json(hyperlinks)
-//   } catch (err) {
-//     res.status(500).json({ message: err.message })
-//   }
-// })
-
-// app.put('/hyperlink/:id', async (req, res) => {
-//   try {
-//     const hyperlinks = await hyperlink.findByIdAndUpdate(req.params.id, req.body, { new: true })
-//     res.json(hyperlinks)
-//   } catch (err) {
-//     res.status(400).json({ message: err.message })
-//   }
-// })
-
-// app.delete('/hyperlink/:id', async (req, res) => {
-//   try {
-//     await hyperlink.findByIdAndDelete(req.params.id)
-//     res.json({ message: 'Link removido' })
-//   } catch (err) {
-//     res.status(500).json({ message: err.message })
-//   }
-// })
-import Produto from './models/produto.js';
-
-// CREATE: Cadastrar produto atrelado ao vendedor
-app.post('/produtos', async (req, res) => {
+// --- CRUD FUNCIONÁRIOS ---
+app.post('/funcionarios', obterEstabelecimento, async (req, res) => {
     try {
-        const { nome, preco, quantidade, vendedorId } = req.body;
-        const novoProduto = new Produto({ nome, preco, quantidade, vendedorId });
-        await novoProduto.save();
-        res.status(201).json(novoProduto);
+        const novo = new Funcionario({ ...req.body, estabelecimentoId: req.estabelecimentoId });
+        await novo.save();
+        res.status(201).json(novo);
+    } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.get('/funcionarios', obterEstabelecimento, async (req, res) => {
+    const lista = await Funcionario.find({ estabelecimentoId: req.estabelecimentoId });
+    res.json(lista);
+});
+
+app.delete('/funcionarios/:id', async (req, res) => {
+    await Funcionario.findByIdAndDelete(req.params.id);
+    res.json({ message: "Funcionário removido" });
+});
+
+// --- CRUD PRODUTOS (Avulsos e Sacolas Surpresa) ---
+app.post('/produtos', obterEstabelecimento, async (req, res) => {
+    try {
+        const novo = new Produto({ ...req.body, estabelecimentoId: req.estabelecimentoId });
+        await novo.save();
+        res.status(201).json(novo);
+    } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.get('/produtos', obterEstabelecimento, async (req, res) => {
+    const lista = await Produto.find({ estabelecimentoId: req.estabelecimentoId });
+    res.json(lista);
+});
+
+app.put('/produtos/:id', async (req, res) => {
+    const atualizado = await Produto.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(atualizado);
+});
+
+app.delete('/produtos/:id', async (req, res) => {
+    await Produto.findByIdAndDelete(req.params.id);
+    res.json({ message: "Deletado com sucesso" });
+});
+
+// --- ROTA DE DENÚNCIAS ---
+app.post('/denuncias', async (req, res) => {
+    try {
+        const nova = new Denuncia(req.body);
+        await nova.save();
+        res.status(201).json(nova);
+    } catch (e) { res.status(400).json({ error: e.message }); }
+});
+
+app.get('/denuncias', async (req, res) => {
+    const lista = await Denuncia.find().populate('estabelecimentoId');
+    res.json(lista);
+});
+
+function obterModelEstabelecimento() {
+    if (mongoose.models.Estabelecimento) {
+        return mongoose.models.Estabelecimento;
+    }
+    const schema = new mongoose.Schema({
+        donoId: { type: String, required: true },
+        nome: { type: String, required: true }
+    }, { collection: 'estabelecimentos' });
+    
+    return mongoose.model('Estabelecimento', schema);
+}
+
+app.post('/estabelecimento', async (req, res) => {
+    try {
+        const donoId = req.headers['x-usuario-id'];
+        const { nome } = req.body;
+
+        if (!donoId) {
+            return res.status(401).json({ error: "Usuário não identificado nos cabeçalhos." });
+        }
+
+        const Estabelecimento = obterModelEstabelecimento();
+
+        const perfilLoja = await Estabelecimento.findOneAndUpdate(
+            { donoId },
+            { nome },
+            { new: true, upsert: true }
+        );
+
+        res.status(200).json(perfilLoja);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        console.error("Erro na rota POST /estabelecimento:", error);
+        res.status(500).json({ error: error.message });
     }
 });
+
+app.get('/estabelecimento/perfil', async (req, res) => {
+    try {
+        const donoId = req.headers['x-usuario-id'];
+
+        if (!donoId) {
+            return res.status(401).json({ error: "Usuário não identificado." });
+        }
+
+        const Estabelecimento = obterModelEstabelecimento();
+        const loja = await Estabelecimento.findOne({ donoId });
+
+        if (!loja) {
+            return res.status(200).json({ nome: "Minha Loja" });
+        }
+
+        res.status(200).json(loja);
+    } catch (error) {
+        console.error("Erro na rota GET /estabelecimento/perfil:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+// Rota no backend para o frontend checar se o Admin já tem uma loja
+app.get('/estabelecimento/checar', async (req, res) => {
+    try {
+        const donoId = req.headers['x-usuario-id'];
+        if (!donoId) return res.status(401).json({ error: "Usuário não identificado." });
+
+        // Procura se já existe uma loja para este ID de administrador
+        const estabelecimento = await Estabelecimento.findOne({ donoId });
+        
+        if (estabelecimento) {
+            // Se achou, retorna que já existe
+            return res.status(200).json({ existe: true, estabelecimento });
+        } else {
+            // Se não achou, diz que não existe
+            return res.status(200).json({ existe: false });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 
 // READ: Listar apenas os produtos do vendedor logado
 app.get('/produtos/vendedor/:vendedorId', async (req, res) => {

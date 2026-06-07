@@ -9,6 +9,9 @@ import Cadastro from "./pages/Cadastro/index.jsx";
 import Footer from "./components/Footer.jsx";
 import PaginaLojista from "./pages/PaginaParaLojistas/index.jsx"
 import Sacola from './pages/PaginaParaLojistas/sacola'; 
+import CadastrarLoja from "./pages/PaginaParaLojistas/CadastrarLoja.jsx";
+import PainelLoja from "./pages/PaginaParaLojistas/PainelLoja.jsx";
+import PaginaCliente from "./pages/Cliente/paginaCliente.jsx";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -30,6 +33,12 @@ function App() {
           <Route path="/cadastro-lojista" element={<PaginaLojista />}/>
 
           <Route path="/sacola" element={<Sacola />} />
+          
+          <Route path="/cadastrar-loja" element={<CadastrarLoja />} />
+
+          <Route path="/painel-loja" element={<PainelLoja />} />
+
+          <Route path="/pagina-cliente" element={<PaginaCliente />} />
         </Routes>
 
         <Footer />
