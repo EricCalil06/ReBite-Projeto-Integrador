@@ -1,26 +1,21 @@
 import { ScrollView, StyleSheet } from "react-native";
-import MainSection from "./mainSection";
-import CardsSection from "./cardsSection";
-import BannerSection from "./bannerSection";
-import CardsCTA from "./cardsCTA";
-import HowItWorksSection from "./howItWorksSection";
-import FaqSection from "./faqSection";
+import Header from "./header";
+import BannerHome from "./bannerHome";
+import PecaNovamente from "./pecaNovamente";
+import ListaLojas from "./listaLojas";
 
-function Inicio({ navigation }) {
+export default function Inicio() {
   return (
-    <ScrollView style={styles.screen}>
-      <MainSection />
-      <CardsSection />
-      <BannerSection />
-      <CardsCTA navigation={navigation} />
-      <HowItWorksSection />
-      <FaqSection />
+    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      <Header />
+      <BannerHome />
+      <PecaNovamente />
+      <ListaLojas />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#fff" },
+  content: { paddingBottom: 100 },
 });
-
-export default Inicio;

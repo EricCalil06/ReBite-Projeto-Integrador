@@ -1,10 +1,13 @@
 import { AuthProvider } from "../context/AuthContext";
+import { CarrinhoProvider } from "../context/CarrinhoContext";
 import NavbarMobile from "../components/NavbarMobile";
 
 export default function Layout() {
   return (
     <AuthProvider>
-      <NavbarMobile />
+      <CarrinhoProvider>
+        <NavbarMobile />
+      </CarrinhoProvider>
     </AuthProvider>
   );
 }
