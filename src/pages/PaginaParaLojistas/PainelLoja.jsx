@@ -10,11 +10,12 @@ function PainelLoja() {
   const [editandoNome, setEditandoNome] = useState(false);
   const [novoNomeLoja, setNovoNomeLoja] = useState("");
   const [nomeLoja, setNomeLoja] = useState("");
+  const [menuAberto, setMenuAberto] = useState(false);
 
   const [formProd, setFormProd] = useState({ 
-  nome: "", preco: "", quantidade: "", validade: "", 
-  categoria: "", tipo: "avulso", alertasAlergicos: "", 
-  descricao: "", imagem: ""
+    nome: "", preco: "", quantidade: "", validade: "", 
+    categoria: "", tipo: "avulso", alertasAlergicos: "", 
+    descricao: "", imagem: ""
   });
   const [formFunc, setFormFunc] = useState({ nome: "", funcao: "Colaborador" });
 
@@ -23,8 +24,6 @@ function PainelLoja() {
   useEffect(() => {
     carregarDados();
   }, [aba]);
-
-  
 
   async function carregarDados() {
     if (!usuarioId) return;
@@ -57,28 +56,29 @@ function PainelLoja() {
     }
   } 
 
-async function handleAlterarNomeLoja() {
-  try {
-    const response = await fetch("http://localhost:5500/estabelecimento", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-usuario-id": usuarioId 
-      },
-      body: JSON.stringify({ nome: novoNomeLoja }) 
-    });
+  async function handleAlterarNomeLoja(e) {
+    e.preventDefault();
+    try {
+      const response = await fetch("http://localhost:5500/estabelecimento", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-usuario-id": usuarioId 
+        },
+        body: JSON.stringify({ nome: novoNomeLoja }) 
+      });
 
-    if (response.ok) {
-      setNomeLoja(novoNomeLoja); 
-      setEditandoNome(false);    
-      alert("Nome do estabelecimento atualizado com sucesso!");
-    } else {
-      alert("Erro ao atualizar o nome do estabelecimento.");
+      if (response.ok) {
+        setNomeLoja(novoNomeLoja); 
+        setEditandoNome(false);    
+        alert("Nome do estabelecimento updated com sucesso!");
+      } else {
+        alert("Erro ao atualizar o nome do estabelecimento.");
+      }
+    } catch (err) {
+      console.error("Erro ao salvar nome:", err);
     }
-  } catch (err) {
-    console.error("Erro ao salvar nome:", err);
   }
-}
 
   async function salvarProduto(e) {
     e.preventDefault();
@@ -87,7 +87,7 @@ async function handleAlterarNomeLoja() {
       headers,
       body: JSON.stringify(formProd)
     });
-    setFormProd({ nome: "", preco: "", quantidade: "", validade: "", categoria: "", tipo: "avulso", alertasAlergicos: "", descricao: "" });
+    setFormProd({ nome: "", preco: "", quantidade: "", validade: "", categoria: "", tipo: "avulso", alertasAlergicos: "", descricao: "", imagem: "" });
     carregarDados();
   }
 
@@ -108,50 +108,71 @@ async function handleAlterarNomeLoja() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FDFBF9] font-sans flex flex-col">
-      {/* Navbar Superior */}
-      <nav className="bg-white border-b border-gray-100 px-12 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-8">
-          <img src={logoReBiteH} alt="Logo" className="w-24" />
-          <span className="text-gray-400">|</span>
-          <button onClick={() => setAba("pedidos")} className={`font-semibold ${aba === 'pedidos' ? 'text-[#F55D22]' : 'text-gray-600'}`}>Painel do Estabelecimento</button>
-          <button onClick={() => setAba("produtos")} className={`font-semibold ${aba === 'produtos' ? 'text-[#F55D22]' : 'text-gray-600'}`}>Produtos/Sacolas</button>
-          <button onClick={() => setAba("funcionarios")} className={`font-semibold ${aba === 'funcionarios' ? 'text-[#F55D22]' : 'text-gray-600'}`}>Funcionários</button>
+    <div className="min-h-screen bg-[#FDFBF9] font-sans flex flex-col w-full overflow-x-hidden">
+      <nav className="bg-white border-b border-gray-100 px-4 md:px-12 py-4 flex justify-between items-center relative w-full z-50">
+        <div className="flex items-center gap-4 lg:gap-8">
+          <img src={logoReBiteH} alt="Logo" className="w-20 md:w-24" />
+          <span className="hidden md:inline text-gray-400">|</span>
+          <div className="hidden md:flex items-center gap-4 lg:gap-8">
+            <button onClick={() => setAba("pedidos")} className={`font-semibold text-sm lg:text-base whitespace-nowrap ${aba === 'pedidos' ? 'text-[#F55D22]' : 'text-gray-600'}`}>Painel do Estabelecimento</button>
+            <button onClick={() => setAba("produtos")} className={`font-semibold text-sm lg:text-base whitespace-nowrap ${aba === 'produtos' ? 'text-[#F55D22]' : 'text-gray-600'}`}>Produtos/Sacolas</button>
+            <button onClick={() => setAba("funcionarios")} className={`font-semibold text-sm lg:text-base whitespace-nowrap ${aba === 'funcionarios' ? 'text-[#F55D22]' : 'text-gray-600'}`}>Funcionários</button>
+          </div>
         </div>
+
         <div className="flex items-center gap-3">
-          <div className="text-right">
+          <div className="text-right hidden sm:block">
             <p className="text-sm font-bold text-gray-800">B@B.com</p>
             <p className="text-xs text-[#F55D22]">Administrador Lojista</p>
           </div>
           <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+          
+          <button onClick={() => setMenuAberto(!menuAberto)} className="md:hidden p-2 text-gray-600 focus:outline-none">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {menuAberto ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
         </div>
+
+        {menuAberto && (
+          <div className="absolute top-full left-0 right-0 bg-white border-b border-gray-100 flex flex-col p-4 shadow-lg md:hidden z-50">
+            <button onClick={() => { setAba("pedidos"); setMenuAberto(false); }} className={`py-3 text-left font-semibold border-b border-gray-50 ${aba === 'pedidos' ? 'text-[#F55D22]' : 'text-gray-600'}`}>Painel do Estabelecimento</button>
+            <button onClick={() => { setAba("produtos"); setMenuAberto(false); }} className={`py-3 text-left font-semibold border-b border-gray-50 ${aba === 'produtos' ? 'text-[#F55D22]' : 'text-gray-600'}`}>Produtos/Sacolas</button>
+            <button onClick={() => { setAba("funcionarios"); setMenuAberto(false); }} className={`py-3 text-left font-semibold ${aba === 'funcionarios' ? 'text-[#F55D22]' : 'text-gray-600'}`}>Funcionários</button>
+          </div>
+        )}
       </nav>
 
-      {/* Cabeçalho do Painel */}
-      <div className="bg-white border-b border-gray-100 px-12 py-8 flex justify-between items-center shadow-sm">
-        <div>
+      <div className="bg-white border-b border-gray-100 px-4 md:px-12 py-6 md:py-8 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center shadow-sm w-full">
+        <div className="w-full md:w-auto">
           {editandoNome ? (
-            <form onSubmit={handleAlterarNomeLoja} className="flex items-center gap-3">
+            <form onSubmit={handleAlterarNomeLoja} className="flex flex-wrap items-center gap-3 w-full">
               <input
                 type="text"
                 value={novoNomeLoja}
                 onChange={(e) => setNovoNomeLoja(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F55D22] text-xl font-bold text-gray-800"
+                className="px-4 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F55D22] text-lg md:text-xl font-bold text-gray-800 min-w-[200px] flex-1 sm:flex-none"
                 required
               />
-              <button type="submit" className="px-4 py-2 bg-green-600 text-white font-bold rounded-full text-xs hover:bg-green-700 transition-colors">
-                Salvar
-              </button>
-              <button type="button" onClick={() => { setEditandoNome(false); setNovoNomeLoja(nomeLoja); }} className="px-4 py-2 bg-gray-200 text-gray-600 font-bold rounded-full text-xs hover:bg-gray-300 transition-colors">
-                Cancelar
-              </button>
+              <div className="flex gap-2">
+                <button type="submit" className="px-4 py-2 bg-green-600 text-white font-bold rounded-full text-xs hover:bg-green-700 transition-colors whitespace-nowrap">
+                  Salvar
+                </button>
+                <button type="button" onClick={() => { setEditandoNome(false); setNovoNomeLoja(nomeLoja); }} className="px-4 py-2 bg-gray-200 text-gray-600 font-bold rounded-full text-xs hover:bg-gray-300 transition-colors whitespace-nowrap">
+                  Cancelar
+                </button>
+              </div>
             </form>
           ) : (
-            <div className="flex items-center gap-4">
-              <h1 className="text-3xl font-bold text-gray-800">
+            <div className="flex items-center gap-4 flex-wrap">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-800 break-words max-w-full">
                 {nomeLoja || "Minha Loja"}
               </h1>
-              <button onClick={() => setEditandoNome(true)} className="text-xs bg-gray-100 text-gray-500 px-3 py-1 rounded-full hover:bg-gray-200 font-medium transition-colors">
+              <button onClick={() => setEditandoNome(true)} className="text-xs bg-gray-100 text-gray-500 px-3 py-1 rounded-full hover:bg-gray-200 font-medium transition-colors whitespace-nowrap">
                  Editar Nome
               </button>
             </div>
@@ -159,127 +180,154 @@ async function handleAlterarNomeLoja() {
           <p className="text-gray-400 text-sm mt-1">Painel de Controle do Administrador</p>
         </div>
 
-        <div className="text-sm font-semibold text-gray-500 bg-gray-50 px-4 py-2 rounded-full border border-gray-100">
+        <div className="text-sm font-semibold text-gray-500 bg-gray-50 px-4 py-2 rounded-full border border-gray-100 self-start md:self-auto">
           Cargo: Lojista Admin 
         </div>
       </div>
 
-      <div className="flex flex-1 p-10 gap-8">
-        {/* Aba de Pedidos */}
+      <div className="flex-1 p-4 md:p-10 w-full max-w-[1400px] mx-auto">
         {aba === "pedidos" && (
           <div className="w-full flex flex-col gap-6">
-            <h1 className="text-2xl font-bold text-gray-800">Painel da loja</h1>
-            <div className="grid grid-cols-3 gap-6">
+            <h1 className="text-xl md:text-2xl font-bold text-gray-800">Painel da loja</h1>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:grid-cols-3 md:gap-6">
               <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                 <p className="text-sm text-gray-500 font-semibold">Pedidos de hoje</p>
-                <p className="text-3xl font-bold text-gray-800 mt-2">30</p>
+                <p className="text-2xl md:text-3xl font-bold text-gray-800 mt-2">30</p>
               </div>
               <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                 <p className="text-sm text-gray-500 font-semibold">Pedidos pendentes</p>
-                <p className="text-3xl font-bold text-orange-500 mt-2">22</p>
+                <p className="text-2xl md:text-3xl font-bold text-orange-500 mt-2">22</p>
               </div>
-              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm sm:col-span-2 lg:col-span-1 md:col-span-1">
                 <p className="text-sm text-gray-500 font-semibold">Valor total dos pedidos</p>
-                <p className="text-3xl font-bold text-[#F55D22] mt-2">R$ 1.095</p>
+                <p className="text-2xl md:text-3xl font-bold text-[#F55D22] mt-2">R$ 1.095</p>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 w-full overflow-hidden">
               <h2 className="text-lg font-bold text-gray-800 mb-4">Pedidos Recentes</h2>
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="text-gray-400 text-sm border-b pb-2">
-                    <th className="pb-3">Nº</th>
-                    <th className="pb-3">Nome</th>
-                    <th className="pb-3">Itens</th>
-                    <th className="pb-3">Valor total</th>
-                    <th className="pb-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="text-gray-700 text-sm">
-                  {[1, 2, 3, 4].map((i) => (
-                    <tr key={i} className="border-b last:border-0 hover:bg-gray-50">
-                      <td className="py-3 font-semibold text-gray-400">#235</td>
-                      <td className="py-3">José de Carvalho</td>
-                      <td className="py-3 text-gray-400">x2</td>
-                      <td className="py-3 font-medium">R$ 159,90</td>
-                      <td className="py-3 text-orange-500 font-semibold">Pendente</td>
+              <div className="w-full overflow-x-auto">
+                <table className="w-full text-left min-w-[500px]">
+                  <thead>
+                    <tr className="text-gray-400 text-sm border-b pb-2">
+                      <th className="pb-3">Nº</th>
+                      <th className="pb-3">Nome</th>
+                      <th className="pb-3">Itens</th>
+                      <th className="pb-3">Valor total</th>
+                      <th className="pb-3">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="text-gray-700 text-sm">
+                    {[1, 2, 3, 4].map((i) => (
+                      <tr key={i} className="border-b last:border-0 hover:bg-gray-50">
+                        <td className="py-3 font-semibold text-gray-400">#235</td>
+                        <td className="py-3">José de Carvalho</td>
+                        <td className="py-3 text-gray-400">x2</td>
+                        <td className="py-3 font-medium">R$ 159,90</td>
+                        <td className="py-3 text-orange-500 font-semibold">Pendente</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Aba CRUD de Produtos */}
         {aba === "produtos" && (
-          <div className="w-full grid grid-cols-3 gap-8">
-            <form onSubmit={salvarProduto} className="bg-white p-6 rounded-2xl border h-fit flex flex-col gap-4">
-              <h2 className="font-bold text-gray-800 text-lg">Adicionar Item ao Catálogo</h2>
-              <input type="text" placeholder="Nome do Produto" value={formProd.nome} onChange={e => setFormProd({...formProd, nome: e.target.value})} className="border p-2 rounded-xl" required />
-              <input type="text" placeholder="Descrição" value={formProd.descricao} onChange={e => setFormProd({...formProd, descricao: e.target.value})} className="border p-2 rounded-xl" />
-              <div className="grid grid-cols-2 gap-2">
-                <input type="number" placeholder="Preço" value={formProd.preco} onChange={e => setFormProd({...formProd, preco: e.target.value})} className="border p-2 rounded-xl" required />
-                <input type="number" placeholder="Qtd" value={formProd.quantidade} onChange={e => setFormProd({...formProd, quantidade: e.target.value})} className="border p-2 rounded-xl" required />
-              </div>
-              <input type="date" value={formProd.validade} onChange={e => setFormProd({...formProd, validade: e.target.value})} className="border p-2 rounded-xl" required />
-              <input type="text" placeholder="Categoria (Ex: Padaria, Pet)" value={formProd.categoria} onChange={e => setFormProd({...formProd, categoria: e.target.value})} className="border p-2 rounded-xl" required />
-              <input type="text" placeholder="Alertas Alérgicos" value={formProd.alertasAlergicos} onChange={e => setFormProd({...formProd, alertasAlergicos: e.target.value})} className="border p-2 rounded-xl" />
-              <select value={formProd.tipo} onChange={e => setFormProd({...formProd, tipo: e.target.value})} className="border p-2 rounded-xl bg-white">
-                <option value="avulso">Produto Avulso</option>
-                <option value="sacola_surpresa">Sacola Surpresa </option>
+          <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+            <div className="lg:col-span-1">
+              <form onSubmit={salvarProduto} className="bg-white p-4 md:p-6 rounded-2xl border flex flex-col gap-4 w-full sticky top-4">
+                <h2 className="font-bold text-gray-800 text-lg">Adicionar Item ao Catálogo</h2>
+                <input type="text" placeholder="Nome do Produto" value={formProd.nome} onChange={e => setFormProd({...formProd, nome: e.target.value})} className="border p-3 rounded-xl w-full text-sm focus:ring-2 focus:ring-[#F55D22] focus:outline-none" required />
+                <input type="text" placeholder="Descrição" value={formProd.descricao} onChange={e => setFormProd({...formProd, descricao: e.target.value})} className="border p-3 rounded-xl w-full text-sm focus:ring-2 focus:ring-[#F55D22] focus:outline-none" />
+                <div className="grid grid-cols-2 gap-2 w-full">
+                  <input type="number" placeholder="Preço" value={formProd.preco} onChange={e => setFormProd({...formProd, preco: e.target.value})} className="border p-3 rounded-xl w-full text-sm focus:ring-2 focus:ring-[#F55D22] focus:outline-none" required />
+                  <input type="number" placeholder="Qtd" value={formProd.quantidade} onChange={e => setFormProd({...formProd, quantidade: e.target.value})} className="border p-3 rounded-xl w-full text-sm focus:ring-2 focus:ring-[#F55D22] focus:outline-none" required />
+                </div>
+                <input type="date" value={formProd.validade} onChange={e => setFormProd({...formProd, validade: e.target.value})} className="border p-3 rounded-xl w-full text-sm focus:ring-2 focus:ring-[#F55D22] focus:outline-none" required />
+                <input type="text" placeholder="Categoria (Ex: Padaria, Pet)" value={formProd.categoria} onChange={e => setFormProd({...formProd, categoria: e.target.value})} className="border p-3 rounded-xl w-full text-sm focus:ring-2 focus:ring-[#F55D22] focus:outline-none" required />
+                <input type="text" placeholder="Alertas Alérgicos" value={formProd.alertasAlergicos} onChange={e => setFormProd({...formProd, alertasAlergicos: e.target.value})} className="border p-3 rounded-xl w-full text-sm focus:ring-2 focus:ring-[#F55D22] focus:outline-none" />
+                <select value={formProd.tipo} onChange={e => setFormProd({...formProd, tipo: e.target.value})} className="border p-3 rounded-xl bg-white w-full text-sm focus:ring-2 focus:ring-[#F55D22] focus:outline-none">
+                  <option value="avulso">Produto Avulso</option>
+                  <option value="sacola_surpresa">Sacola Surpresa</option>
+                </select>
                 <input
                   type="text"
-                  placeholder="public/banana.jpg"
+                  placeholder="Caminho da imagem (Ex: public/banana.jpg)"
                   value={formProd.imagem}
                   onChange={e => setFormProd({ ...formProd, imagem: e.target.value })}
-                  className="border p-2 rounded-xl text-sm"
+                  className="border p-3 rounded-xl w-full text-sm focus:ring-2 focus:ring-[#F55D22] focus:outline-none"
                 />
-              </select>
-              <button className="bg-[#F55D22] text-white py-2 rounded-xl font-bold">Cadastrar Produto</button>
-            </form>
+                <button className="bg-[#F55D22] text-white py-3 rounded-xl font-bold hover:bg-[#e04e14] transition-colors mt-2 text-sm">Cadastrar Produto</button>
+              </form>
+            </div>
 
-            <div className="col-span-2 bg-white p-6 rounded-2xl border">
+            <div className="lg:col-span-2 bg-white p-4 md:p-6 rounded-2xl border w-full">
               <h2 className="font-bold text-lg mb-4">Catálogo Ativo</h2>
-              <div className="flex flex-col gap-2">
-                {produtos.map(p => (
-                  <div key={p._id} className="flex justify-between items-center p-3 border rounded-xl hover:bg-gray-50">
-                    <div>
-                      <p className="font-bold text-gray-800">{p.nome} <span className="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-[#F55D22] font-normal">{p.tipo}</span></p>
-                      <p className="text-xs text-gray-400">Categoria: {p.categoria} | Qtd: {p.quantidade} | Validade: {new Date(p.validade).toLocaleDateString()}</p>
+              <div className="flex flex-col gap-3 w-full">
+                {produtos.length === 0 ? (
+                  <p className="text-gray-400 text-sm text-center py-8">Nenhum produto cadastrado no momento.</p>
+                ) : (
+                  produtos.map(p => (
+                    <div key={p._id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border rounded-xl hover:bg-gray-50 gap-4 w-full transition-all">
+                      <div className="flex-1 min-w-0 w-full">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <p className="font-bold text-gray-800 text-sm md:text-base break-words max-w-[70%]">{p.nome}</p>
+                          <span className="text-[10px] md:text-xs px-2 py-0.5 rounded-full bg-orange-100 text-[#F55D22] font-semibold uppercase">{p.tipo}</span>
+                        </div>
+                        <p className="text-xs text-gray-500 leading-relaxed break-words">
+                          Categoria: <span className="font-medium text-gray-700">{p.categoria}</span> | 
+                          Qtd: <span className="font-medium text-gray-700"> {p.quantidade} </span> | 
+                          Validade: <span className="font-medium text-gray-700"> {new Date(p.validade).toLocaleDateString()}</span>
+                        </p>
+                      </div>
+                      <button onClick={() => deletarItem('produtos', p._id)} className="text-red-500 font-bold text-xs bg-red-50 px-4 py-2 rounded-full hover:bg-red-100 transition-colors self-end sm:self-auto w-full sm:w-auto text-center">
+                        Remover
+                      </button>
                     </div>
-                    <button onClick={() => deletarItem('produtos', p._id)} className="text-red-500 font-bold text-sm bg-red-50 px-3 py-1 rounded-full">Remover</button>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           </div>
         )}
 
-        {/* Aba CRUD de Funcionários */}
         {aba === "funcionarios" && (
-          <div className="w-full grid grid-cols-3 gap-8">
-            <form onSubmit={salvarFuncionario} className="bg-white p-6 rounded-2xl border h-fit flex flex-col gap-4">
-              <h2 className="font-bold text-gray-800 text-lg">Registrar Funcionário</h2>
-              <input type="text" placeholder="Nome Completo" value={formFunc.nome} onChange={e => setFormFunc({...formFunc, nome: e.target.value})} className="border p-2 rounded-xl" required />
-              <select value={formFunc.funcao} onChange={e => setFormFunc({...formFunc, funcao: e.target.value})} className="border p-2 rounded-xl bg-white">
-                <option value="Colaborador">Colaborador</option>
-                <option value="Repositor">Repositor</option>
-                <option value="ADM">ADM</option>
-              </select>
-              <button className="bg-gray-800 text-white py-2 rounded-xl font-bold">Adicionar Membro</button>
-            </form>
+          <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+            <div className="lg:col-span-1">
+              <form onSubmit={salvarFuncionario} className="bg-white p-4 md:p-6 rounded-2xl border flex flex-col gap-4 w-full sticky top-4">
+                <h2 className="font-bold text-gray-800 text-lg">Registrar Funcionário</h2>
+                <input type="text" placeholder="Nome Completo" value={formFunc.nome} onChange={e => setFormFunc({...formFunc, nome: e.target.value})} className="border p-3 rounded-xl w-full text-sm focus:ring-2 focus:ring-gray-800 focus:outline-none" required />
+                <select value={formFunc.funcao} onChange={e => setFormFunc({...formFunc, funcao: e.target.value})} className="border p-3 rounded-xl bg-white w-full text-sm focus:ring-2 focus:ring-gray-800 focus:outline-none">
+                  <option value="Colaborador">Colaborador</option>
+                  <option value="Repositor">Repositor</option>
+                  <option value="ADM">ADM</option>
+                </select>
+                <button className="bg-gray-800 text-white py-3 rounded-xl font-bold hover:bg-gray-900 transition-colors mt-2 text-sm">Adicionar Membro</button>
+              </form>
+            </div>
 
-            <div className="col-span-2 bg-white p-6 rounded-2xl border">
+            <div className="lg:col-span-2 bg-white p-4 md:p-6 rounded-2xl border w-full">
               <h2 className="font-bold text-lg mb-4">Quadro de Funcionários</h2>
-              <div className="flex flex-col gap-2">
-                {funcionarios.map(f => (
-                  <div key={f._id} className="flex justify-between items-center p-3 border rounded-xl">
-                    <p className="font-bold text-gray-700">{f.nome} — <span className="text-gray-400 text-sm font-normal">{f.funcao}</span></p>
-                    <button onClick={() => deletarItem('funcionarios', f._id)} className="text-red-400 hover:text-red-600 text-sm">Remover</button>
-                  </div>
-                ))}
+              <div className="flex flex-col gap-3 w-full">
+                {funcionarios.length === 0 ? (
+                  <p className="text-gray-400 text-sm text-center py-8">Nenhum funcionário registrado.</p>
+                ) : (
+                  funcionarios.map(f => (
+                    <div key={f._id} className="flex justify-between items-center p-4 border rounded-xl hover:bg-gray-50 gap-4 w-full transition-all">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-gray-700 text-sm md:text-base break-words">
+                          {f.nome} — <span className="text-gray-400 text-xs md:text-sm font-normal italic">{f.funcao}</span>
+                        </p>
+                      </div>
+                      <button onClick={() => deletarItem('funcionarios', f._id)} className="text-red-400 hover:text-red-600 font-medium text-xs bg-gray-50 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors whitespace-nowrap">
+                        Remover
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>

@@ -6,16 +6,29 @@ import logoReBiteH from "../../assets/logoReBiteH.png";
 function FormCadastro({ step, goToNextStep }) {
   const navigate = useNavigate();
   const [aceitouTermos, setAceitouTermos] = useState(false);
-  
+
   const [formData, setFormData] = useState({
+    nome: "",
+    dataNascimento: "",
     email: "",
-    senha: "",
-    cargo: "cliente", 
+    telefone: "",
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (name === "telefone") {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value.replace(/\D/g, ""),
+      }));
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleFinalize = async () => {
@@ -34,11 +47,10 @@ function FormCadastro({ step, goToNextStep }) {
       });
 
       if (response.ok) {
-        //alert("Cadastro realizado com sucesso!");
         navigate("/login");
       } else {
         const errorData = await response.json();
-        //  alert("Erro no cadastro: " + errorData.error);
+        console.error("Erro no cadastro:", errorData.error);
       }
     } catch (error) {
       console.error("Erro ao conectar:", error);
@@ -61,29 +73,35 @@ function FormCadastro({ step, goToNextStep }) {
             Crie sua conta
           </h2>
 
-          <form className="flex flex-col gap-6" onSubmit={(e) => e.preventDefault()}>
-            
+          <form
+            className="flex flex-col gap-6"
+            onSubmit={(e) => e.preventDefault()}
+          >
             {step === 1 && (
               <>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-2">E-mail</label>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    Nome Completo
+                  </label>
                   <input
-                    type="email"
-                    name="email" 
-                    value={formData.email}
+                    type="text"
+                    name="nome"
+                    value={formData.nome}
                     onChange={handleChange}
-                    placeholder="Coloque seu melhor e-mail"
+                    placeholder="Digite seu nome completo"
                     className="w-full px-5 py-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F55D22]"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-2">Senha</label>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    Data de Nascimento
+                  </label>
                   <input
-                    type="password"
-                    name="senha"
-                    value={formData.senha}
+                    type="date"
+                    name="dataNascimento"
+                    value={formData.dataNascimento}
                     onChange={handleChange}
-                    placeholder="Crie uma senha"
                     className="w-full px-5 py-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F55D22]"
                   />
                 </div>
@@ -93,24 +111,31 @@ function FormCadastro({ step, goToNextStep }) {
             {step === 2 && (
               <>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-2">Nome Completo</label>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    E-mail
+                  </label>
                   <input
-                    type="text"
-                    placeholder="Digite seu nome"
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Digite seu e-mail"
                     className="w-full px-5 py-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F55D22]"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-2">Cargo</label>
-                  <select 
-                    name="cargo"
-                    value={formData.cargo}
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    Telefone
+                  </label>
+                  <input
+                    type="tel"
+                    name="telefone"
+                    value={formData.telefone}
                     onChange={handleChange}
-                    className="w-full px-5 py-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F55D22] bg-white"
-                  >
-                    <option value="cliente">Cliente</option>
-                    <option value="admin">Administrador</option>
-                  </select>
+                    placeholder="(11) 99999-9999"
+                    className="w-full px-5 py-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F55D22]"
+                  />
                 </div>
               </>
             )}
@@ -118,9 +143,24 @@ function FormCadastro({ step, goToNextStep }) {
             {step === 3 && (
               <>
                 <div className="bg-gray-50 p-4 rounded-2xl border border-dashed border-gray-300">
-                  <p className="text-sm text-gray-600"><strong>E-mail:</strong> {formData.email}</p>
-                  <p className="text-sm text-gray-600"><strong>Cargo:</strong> {formData.cargo}</p>
+                  <p className="text-sm text-gray-600">
+                    <strong>Nome:</strong> {formData.nome}
+                  </p>
+
+                  <p className="text-sm text-gray-600">
+                    <strong>Data de Nascimento:</strong>{" "}
+                    {formData.dataNascimento}
+                  </p>
+
+                  <p className="text-sm text-gray-600">
+                    <strong>E-mail:</strong> {formData.email}
+                  </p>
+
+                  <p className="text-sm text-gray-600">
+                    <strong>Telefone:</strong> {formData.telefone}
+                  </p>
                 </div>
+
                 <div className="flex items-center gap-2 px-2 mt-2">
                   <input
                     type="checkbox"
@@ -130,19 +170,27 @@ function FormCadastro({ step, goToNextStep }) {
                     onChange={(e) => setAceitouTermos(e.target.checked)}
                   />
                   <label htmlFor="termos" className="text-sm text-gray-600">
-                    Aceito os <a href="#" className="text-[#F55D22] font-bold">Termos de Uso</a>
+                    Aceito os{" "}
+                    <a href="#" className="text-[#F55D22] font-bold">
+                      Termos de Uso
+                    </a>
                   </label>
                 </div>
               </>
             )}
-
             <p className="text-gray-600 text-center text-sm">
-              Já tem uma conta? <a href="/login" className="text-[#F55D22] font-bold">Faça login!</a>
+              Já tem uma conta?{" "}
+              <a href="/login" className="text-[#F55D22] font-bold">
+                Faça login!
+              </a>
             </p>
 
             <div className="flex items-center justify-center gap-2 bg-gray-50 rounded-full w-max mx-auto px-4 py-2">
               {[1, 2, 3].map((item) => (
-                <div key={item} className={`h-3 rounded-full transition-all duration-300 ${step === item ? "w-8 bg-[#F55D22]" : step > item ? "w-3 bg-[#F55D22]" : "w-3 bg-gray-300"}`}></div>
+                <div
+                  key={item}
+                  className={`h-3 rounded-full transition-all duration-300 ${step === item ? "w-8 bg-[#F55D22]" : step > item ? "w-3 bg-[#F55D22]" : "w-3 bg-gray-300"}`}
+                ></div>
               ))}
             </div>
 
