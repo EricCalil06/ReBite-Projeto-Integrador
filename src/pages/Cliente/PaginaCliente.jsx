@@ -17,11 +17,12 @@ function PaginaCliente() {
   }, []);
 
 async function carregarDadosLoja() {
-  const idDaLojaFixo = "6a2492063d2807648680e61c";
+  const idDaLojaFixo = "6a24a0b6c7eb1b3b5a1f71b5";
 
   try {
     setCarregando(true);
 
+    // 1. Busca os produtos da padaria
     const resProd = await fetch("http://localhost:5500/produtos", {
       headers: {
         "x-estabelecimento-id": idDaLojaFixo
@@ -39,10 +40,17 @@ async function carregarDadosLoja() {
       setProdutos([]);
     }
 
+    // 2. Busca o perfil da loja de forma segura
     try {
+      // ATENÇÃO: Verifica se o token foi salvo com letras maiúsculas ou minúsculas no seu Login
+      const usuarioId = localStorage.getItem("usuarioId") || localStorage.getItem("id");
+      const token = localStorage.getItem("token");
+
       const resPerfil = await fetch("http://localhost:5500/estabelecimento/perfil", {
         headers: { 
-          "x-estabelecimento-id": idDaLojaFixo
+          "x-estabelecimento-id": idDaLojaFixo,
+          "x-usuario-id": usuarioId,
+          "Authorization": token ? `Bearer ${token}` : ""
         }
       });
       
@@ -50,6 +58,7 @@ async function carregarDadosLoja() {
         const dadosLoja = await resPerfil.json();
         setLoja(dadosLoja);
       } else {
+        // Se a API falhar ou der 401, forçamos o nome correto da Padaria do B
         setLoja({ _id: idDaLojaFixo, nome: "Padaria do B" });
       }
     } catch (perfilErr) {
@@ -103,12 +112,12 @@ async function carregarDadosLoja() {
 
   async function finalizarPedido() {
     if (!loja || !loja._id) {
-      alert("Erro: Dados da loja não carregados corretamente.");
+      //alert("Erro: Dados da loja não carregados corretamente.");
       return;
     }
 
     if (carrinho.length === 0) {
-      alert("Seu carrinho está vazio! Adicione algum produto antes de finalizar.");
+      //alert("Seu carrinho está vazio! Adicione algum produto antes de finalizar.");
       return;
     }
 
@@ -128,15 +137,15 @@ async function carregarDadosLoja() {
 
       if (response.ok) {
         const pedidoCriado = await response.json();
-        alert(`Pedido realizado com sucesso! ID: #${pedidoCriado._id.slice(-6).toUpperCase()}`);
+        //alert(`Pedido realizado com sucesso! ID: #${pedidoCriado._id.slice(-6).toUpperCase()}`);
         setCarrinho([]);
       } else {
         const erro = await response.json();
-        alert(`Erro ao finalizar pedido: ${erro.error || "Tente novamente."}`);
+        //alert(`Erro ao finalizar pedido: ${erro.error || "Tente novamente."}`);
       }
     } catch (err) {
       console.error("Erro na requisição do pedido:", err);
-      alert("Erro de conexão com o servidor.");
+      //alert("Erro de conexão com o servidor.");
     }
   }
 
@@ -160,9 +169,9 @@ async function carregarDadosLoja() {
         setModalAberto(false);
         setMotivoDenuncia("");
         setDescricaoDenuncia("");
-        alert("Denúncia enviada com sucesso!");
+        //alert("Denúncia enviada com sucesso!");
       } else {
-        alert("Erro ao enviar denúncia.");
+        //alert("Erro ao enviar denúncia.");
       }
     } catch (err) {
       console.error("Erro ao processar denúncia:", err);

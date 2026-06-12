@@ -6,16 +6,13 @@ function PainelLoja() {
   const [produtos, setProdutos] = useState([]);
   const [funcionarios, setFuncionarios] = useState([]);
   const usuarioId = localStorage.getItem("usuarioId");
-  const [loja, setLoja] = useState({ nome: "Carregando..." });
+  const [loja, setLoja] = useState(null); // Começa como null até carregar do banco
   const [editandoNome, setEditandoNome] = useState(false);
   const [novoNomeLoja, setNovoNomeLoja] = useState("");
-  const [nomeLoja, setNomeLoja] = useState("");
-  const [pedidos, setPedidos] = useState([]);  const [menuAberto, setMenuAberto] = useState(false);
+  const [pedidos, setPedidos] = useState([]);
+  const [menuAberto, setMenuAberto] = useState(false);
 
   const [formProd, setFormProd] = useState({ 
-    nome: "", preco: "", quantidade: "", validade: "", 
-    categoria: "", tipo: "avulso", alertasAlergicos: "", 
-    descricao: "", imagem: ""
     nome: "", preco: "", quantidade: "", validade: "", 
     categoria: "", tipo: "avulso", alertasAlergicos: "", 
     descricao: "", imagem: ""
@@ -24,41 +21,74 @@ function PainelLoja() {
 
   const headers = { "Content-Type": "application/json", "x-usuario-id": usuarioId };
 
-  useEffect(() => {
-    carregarDados();
-  }, [aba]);
-
+  // 1. FUNÇÃO QUE FALTAVA: Carrega produtos e funcionários dependendo da aba ativa
   async function carregarDados() {
-    if (!usuarioId) return;
-    
     try {
-      const resPerfil = await fetch("http://localhost:5500/estabelecimento/perfil", { headers });
-      if (resPerfil.ok) {
-        const dadosPerfil = await resPerfil.json();
-        setNomeLoja(dadosPerfil.nome);
-        setNovoNomeLoja(dadosPerfil.nome);
+      if (aba === "produtos") {
+        const res = await fetch("http://localhost:5500/produtos", { headers });
+        if (res.ok) setProdutos(await res.json());
+      }
+      if (aba === "funcionarios") {
+        const res = await fetch("http://localhost:5500/funcionarios", { headers });
+        if (res.ok) setFuncionarios(await res.json());
+      }
+    } catch (err) {
+      console.error("Erro ao carregar dados da aba:", err);
+    }
+  }
+
+  // 2. FUNÇÃO ESSENCIAL: Busca os dados da loja pelo ID do usuário logado
+  async function carregarPerfilLoja() {
+    try {
+      const res = await fetch("http://localhost:5500/estabelecimento/perfil", {
+        headers: { "x-usuario-id": usuarioId }
+      });
+      if (res.ok) {
+        const dadosLoja = await res.json();
+        setLoja(dadosLoja);
+        setNovoNomeLoja(dadosLoja.nome);
+        
+        // Com o ID da loja em mãos, busca os pedidos dela imediatamente
+        carregarPedidos(dadosLoja._id);
       }
     } catch (err) {
       console.error("Erro ao carregar perfil da loja:", err);
     }
+  }
 
+  // 3. Busca os pedidos recebidos usando o ID real da loja
+  async function carregarPedidos(estabelecimentoId) {
+    const idParaBuscar = estabelecimentoId || (loja && loja._id) || "6a24a0b6c7eb1b3b5a1f71b5";
     try {
-      const resP = await fetch("http://localhost:5500/produtos", { headers });
-      if (resP.ok) {
-        const dataP = await resP.json();
-        setProdutos(dataP);
-      }
+      const res = await fetch("http://localhost:5500/pedidos/estabelecimento", {
+        headers: {
+          "x-estabelecimento-id": idParaBuscar
+        }
+      });
 
-      const resF = await fetch("http://localhost:5500/funcionarios", { headers });
-      if (resF.ok) {
-        const dataF = await resF.json();
-        setFuncionarios(dataF);
+      if (res.ok) {
+        const dadosPedidos = await res.json();
+        setPedidos(dadosPedidos);
       }
     } catch (err) {
-      console.error("Erro ao carregar listas do catálogo:", err);
+      console.error("Erro ao carregar pedidos:", err);
     }
-  } 
+  }
 
+  // Monitora a troca de abas
+  useEffect(() => {
+    carregarDados();
+    if (loja && aba === "pedidos") {
+      carregarPedidos(loja._id);
+    }
+  }, [aba]);
+
+  // Carrega as informações básicas ao abrir a página
+  useEffect(() => {
+    carregarPerfilLoja();
+  }, []);
+
+  // Organizado e limpo sem duplicações
   async function handleAlterarNomeLoja(e) {
     e.preventDefault();
     try {
@@ -70,32 +100,11 @@ function PainelLoja() {
         },
         body: JSON.stringify({ nome: novoNomeLoja }) 
       });
-  async function handleAlterarNomeLoja() {
-    try {
-      const response = await fetch("http://localhost:5500/estabelecimento", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-usuario-id": usuarioId 
-        },
-        body: JSON.stringify({ nome: novoNomeLoja }) 
-      });
 
       if (response.ok) {
-        setNomeLoja(novoNomeLoja); 
+        setLoja(prev => ({ ...prev, nome: novoNomeLoja }));
         setEditandoNome(false);    
-        alert("Nome do estabelecimento updated com sucesso!");
-      } else {
-        alert("Erro ao atualizar o nome do estabelecimento.");
-      }
-    } catch (err) {
-      console.error("Erro ao salvar nome:", err);
-    }
-  }
-      if (response.ok) {
-        setNomeLoja(novoNomeLoja); 
-        setEditandoNome(false);    
-        alert("Nome do estabelecimento updated com sucesso!");
+        alert("Nome do estabelecimento atualizado com sucesso!");
       } else {
         alert("Erro ao atualizar o nome do estabelecimento.");
       }
@@ -111,7 +120,6 @@ function PainelLoja() {
       headers,
       body: JSON.stringify(formProd)
     });
-    setFormProd({ nome: "", preco: "", quantidade: "", validade: "", categoria: "", tipo: "avulso", alertasAlergicos: "", descricao: "", imagem: "" });
     setFormProd({ nome: "", preco: "", quantidade: "", validade: "", categoria: "", tipo: "avulso", alertasAlergicos: "", descricao: "", imagem: "" });
     carregarDados();
   }
@@ -132,30 +140,21 @@ function PainelLoja() {
     carregarDados();
   }
 
-  async function buscarPedidosLoja() {
-    try {
-      const idLoja = "6a2492063d2807648680e61c"; 
+  // --- CÁLCULO DOS INDICADORES EM TEMPO REAL ---
+  
+  // 1. Filtra os pedidos feitos na data de hoje
+  const pedidosDeHoje = pedidos.filter((pedido) => {
+    const dataPedido = new Date(pedido.createdAt).toLocaleDateString('pt-BR');
+    const dataHoje = new Date().toLocaleDateString('pt-BR');
+    return dataPedido === dataHoje;
+  });
 
-      const response = await fetch("http://localhost:5500/pedidos/estabelecimento", {
-        method: "GET",
-        headers: {
-          "x-estabelecimento-id": idLoja
-        }
-      });
+  // 2. Filtra os pedidos que estão com o status "Pendente"
+  const pedidosPendentes = pedidos.filter((pedido) => pedido.status === "Pendente");
 
-      if (response.ok) {
-        const dadosPedidos = await response.json();
-        setPedidos(dadosPedidos);
-      }
-    } catch (err) {
-      console.error("Erro ao buscar pedidos do banco:", err);
-    }
-  }
-
-  useEffect(() => {
-    carregarDados();
-    buscarPedidosLoja();
-  }, []);
+  // 3. Soma o valor total de TODOS os pedidos retornados da loja
+  const valorTotalGeral = pedidos.reduce((acc, pedido) => acc + (pedido.total || 0), 0);
+  // ----------------------------------------------
 
   return (
     <div className="min-h-screen bg-[#FDFBF9] font-sans flex flex-col w-full overflow-x-hidden">
@@ -212,7 +211,7 @@ function PainelLoja() {
                 <button type="submit" className="px-4 py-2 bg-green-600 text-white font-bold rounded-full text-xs hover:bg-green-700 transition-colors whitespace-nowrap">
                   Salvar
                 </button>
-                <button type="button" onClick={() => { setEditandoNome(false); setNovoNomeLoja(nomeLoja); }} className="px-4 py-2 bg-gray-200 text-gray-600 font-bold rounded-full text-xs hover:bg-gray-300 transition-colors whitespace-nowrap">
+                <button type="button" onClick={() => { setEditandoNome(false); setNovoNomeLoja(loja?.nome || ""); }} className="px-4 py-2 bg-gray-200 text-gray-600 font-bold rounded-full text-xs hover:bg-gray-300 transition-colors whitespace-nowrap">
                   Cancelar
                 </button>
               </div>
@@ -220,7 +219,7 @@ function PainelLoja() {
           ) : (
             <div className="flex items-center gap-4 flex-wrap">
               <h1 className="text-2xl md:text-3xl font-bold text-gray-800 break-words max-w-full">
-                {nomeLoja || "Minha Loja"}
+                {loja ? loja.nome : "Carregando..."}
               </h1>
               <button onClick={() => setEditandoNome(true)} className="text-xs bg-gray-100 text-gray-500 px-3 py-1 rounded-full hover:bg-gray-200 font-medium transition-colors whitespace-nowrap">
                  Editar Nome
@@ -238,8 +237,33 @@ function PainelLoja() {
       <div className="flex flex-1 p-10 gap-8">
         {/* Painel de Pedidos (Aparece quando a aba for "pedidos") */}
         {aba === "pedidos" && (
-          <div className="w-full flex flex-col gap-4 mt-6">
-            <h2 className="font-bold text-gray-800 text-lg">Pedidos Recebidos</h2>
+          <div className="w-full flex flex-col gap-6 mt-6">
+            
+            {/* BLOCO DOS CARDS INFORMATIVOS (DADOS REAIS) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+              {/* Card 1: Pedidos de Hoje */}
+              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-1">
+                <span className="text-gray-500 font-semibold text-sm">Pedidos de hoje</span>
+                <span className="text-3xl font-bold text-[#F55D22]">{pedidosDeHoje.length}</span>
+              </div>
+
+              {/* Card 2: Pedidos Pendentes */}
+              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-1">
+                <span className="text-gray-500 font-semibold text-sm">Pedidos pendentes</span>
+                <span className="text-3xl font-bold text-[#F55D22]">{pedidosPendentes.length}</span>
+              </div>
+
+              {/* Card 3: Valor Total */}
+              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-1">
+                <span className="text-gray-500 font-semibold text-sm">Valor total dos pedidos</span>
+                <span className="text-3xl font-bold text-[#F55D22]">
+                  R$ {valorTotalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            </div>
+
+            <h2 className="font-bold text-gray-800 text-lg mt-2">Pedidos Recebidos</h2>
+            
             {pedidos.length === 0 ? (
               <p className="text-gray-400 text-sm italic">Nenhum pedido recebido ainda.</p>
             ) : (
@@ -298,7 +322,6 @@ function PainelLoja() {
                 <option value="sacola_surpresa">Sacola Surpresa</option>
               </select>
 
-              {/* Input reposicionado fora do select de forma correta e válida */}
               <input
                 type="text"
                 placeholder="URL da Imagem (Ex: public/banana.jpg)"

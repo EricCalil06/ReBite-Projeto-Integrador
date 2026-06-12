@@ -745,19 +745,32 @@ app.post('/estabelecimento', async (req, res) => {
 
 app.get('/estabelecimento/perfil', async (req, res) => {
     try {
+        // Captura os dois cabeçalhos possíveis enviados pelo Frontend
+        const estabelecimentoId = req.headers['x-estabelecimento-id'];
         const donoId = req.headers['x-usuario-id'];
 
-        if (!donoId) {
-            return res.status(401).json({ error: "Usuário não identificado." });
+        const Estabelecimento = obterModelEstabelecimento();
+        let loja = null;
+
+        // Se o frontend informou o ID direto da loja (caso da PaginaCliente), busca por ele
+        if (estabelecimentoId) {
+            loja = await Estabelecimento.findById(estabelecimentoId);
+        } 
+        // Se não informou o ID da loja, mas informou o ID do usuário (caso do Painel da Loja), busca pelo dono
+        else if (donoId) {
+            loja = await Estabelecimento.findOne({ donoId });
+        } 
+        // Se não enviou nenhum dos dois, barra por falta de identificação (Erro 401)
+        else {
+            return res.status(401).json({ error: "Estabelecimento ou Usuário não identificado." });
         }
 
-        const Estabelecimento = obterModelEstabelecimento();
-        const loja = await Estabelecimento.findOne({ donoId });
-
+        // Se a busca não encontrar nada no banco, retorna o objeto padrão provisório
         if (!loja) {
             return res.status(200).json({ nome: "Minha Loja" });
         }
 
+        // Retorna a loja correta encontrada
         res.status(200).json(loja);
     } catch (error) {
         console.error("Erro na rota GET /estabelecimento/perfil:", error);
@@ -841,12 +854,25 @@ app.get('/pedidos/estabelecimento', async (req, res) => {
             return res.status(400).json({ error: "ID do estabelecimento não fornecido." });
         }
 
-        const pedidos = await mongoose.model('Pedido')
-            .find({ estabelecimentoId: estId })
-            .sort({ createdAt: -1 });
+        // Acessa o Types diretamente de dentro do mongoose importado no topo do arquivo
+        const { Types } = mongoose;
+
+        // Valida se o ID recebido tem o formato correto de 24 caracteres hexadecimais
+        if (!Types.ObjectId.isValid(estId)) {
+            return res.status(400).json({ error: "ID do estabelecimento em formato inválido." });
+        }
+
+        const Pedido = mongoose.model('Pedido');
+        
+        // Convertemos a String estId em um ObjectId real usando o Types nativo do mongoose
+        const pedidos = await Pedido.find({ 
+            estabelecimentoId: new Types.ObjectId(estId) 
+        })
+        .sort({ createdAt: -1 });
 
         res.status(200).json(pedidos);
     } catch (error) {
+        console.error("Erro ao buscar pedidos do estabelecimento:", error);
         res.status(500).json({ error: error.message });
     }
 });
