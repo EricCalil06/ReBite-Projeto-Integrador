@@ -10,9 +10,12 @@ function PainelLoja() {
   const [editandoNome, setEditandoNome] = useState(false);
   const [novoNomeLoja, setNovoNomeLoja] = useState("");
   const [nomeLoja, setNomeLoja] = useState("");
-  const [menuAberto, setMenuAberto] = useState(false);
+  const [pedidos, setPedidos] = useState([]);  const [menuAberto, setMenuAberto] = useState(false);
 
   const [formProd, setFormProd] = useState({ 
+    nome: "", preco: "", quantidade: "", validade: "", 
+    categoria: "", tipo: "avulso", alertasAlergicos: "", 
+    descricao: "", imagem: ""
     nome: "", preco: "", quantidade: "", validade: "", 
     categoria: "", tipo: "avulso", alertasAlergicos: "", 
     descricao: "", imagem: ""
@@ -67,7 +70,28 @@ function PainelLoja() {
         },
         body: JSON.stringify({ nome: novoNomeLoja }) 
       });
+  async function handleAlterarNomeLoja() {
+    try {
+      const response = await fetch("http://localhost:5500/estabelecimento", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-usuario-id": usuarioId 
+        },
+        body: JSON.stringify({ nome: novoNomeLoja }) 
+      });
 
+      if (response.ok) {
+        setNomeLoja(novoNomeLoja); 
+        setEditandoNome(false);    
+        alert("Nome do estabelecimento updated com sucesso!");
+      } else {
+        alert("Erro ao atualizar o nome do estabelecimento.");
+      }
+    } catch (err) {
+      console.error("Erro ao salvar nome:", err);
+    }
+  }
       if (response.ok) {
         setNomeLoja(novoNomeLoja); 
         setEditandoNome(false);    
@@ -88,6 +112,7 @@ function PainelLoja() {
       body: JSON.stringify(formProd)
     });
     setFormProd({ nome: "", preco: "", quantidade: "", validade: "", categoria: "", tipo: "avulso", alertasAlergicos: "", descricao: "", imagem: "" });
+    setFormProd({ nome: "", preco: "", quantidade: "", validade: "", categoria: "", tipo: "avulso", alertasAlergicos: "", descricao: "", imagem: "" });
     carregarDados();
   }
 
@@ -106,6 +131,31 @@ function PainelLoja() {
     await fetch(`http://localhost:5500/${rota}/${id}`, { method: "DELETE" });
     carregarDados();
   }
+
+  async function buscarPedidosLoja() {
+    try {
+      const idLoja = "6a2492063d2807648680e61c"; 
+
+      const response = await fetch("http://localhost:5500/pedidos/estabelecimento", {
+        method: "GET",
+        headers: {
+          "x-estabelecimento-id": idLoja
+        }
+      });
+
+      if (response.ok) {
+        const dadosPedidos = await response.json();
+        setPedidos(dadosPedidos);
+      }
+    } catch (err) {
+      console.error("Erro ao buscar pedidos do banco:", err);
+    }
+  }
+
+  useEffect(() => {
+    carregarDados();
+    buscarPedidosLoja();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#FDFBF9] font-sans flex flex-col w-full overflow-x-hidden">
@@ -185,84 +235,80 @@ function PainelLoja() {
         </div>
       </div>
 
-      <div className="flex-1 p-4 md:p-10 w-full max-w-[1400px] mx-auto">
+      <div className="flex flex-1 p-10 gap-8">
+        {/* Painel de Pedidos (Aparece quando a aba for "pedidos") */}
         {aba === "pedidos" && (
-          <div className="w-full flex flex-col gap-6">
-            <h1 className="text-xl md:text-2xl font-bold text-gray-800">Painel da loja</h1>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:grid-cols-3 md:gap-6">
-              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                <p className="text-sm text-gray-500 font-semibold">Pedidos de hoje</p>
-                <p className="text-2xl md:text-3xl font-bold text-gray-800 mt-2">30</p>
-              </div>
-              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                <p className="text-sm text-gray-500 font-semibold">Pedidos pendentes</p>
-                <p className="text-2xl md:text-3xl font-bold text-orange-500 mt-2">22</p>
-              </div>
-              <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm sm:col-span-2 lg:col-span-1 md:col-span-1">
-                <p className="text-sm text-gray-500 font-semibold">Valor total dos pedidos</p>
-                <p className="text-2xl md:text-3xl font-bold text-[#F55D22] mt-2">R$ 1.095</p>
-              </div>
-            </div>
+          <div className="w-full flex flex-col gap-4 mt-6">
+            <h2 className="font-bold text-gray-800 text-lg">Pedidos Recebidos</h2>
+            {pedidos.length === 0 ? (
+              <p className="text-gray-400 text-sm italic">Nenhum pedido recebido ainda.</p>
+            ) : (
+              pedidos.map((pedido) => (
+                <div key={pedido._id} className="p-5 bg-white border border-gray-100 rounded-2xl shadow-sm flex justify-between items-center">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-bold text-gray-400">
+                        ID: #{pedido._id.slice(-6).toUpperCase()}
+                      </span>
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${pedido.status === 'Pendente' ? 'bg-amber-50 text-amber-600' :
+                          pedido.status === 'Pronto' ? 'bg-green-50 text-green-600' : 'bg-gray-50 text-gray-600'
+                        }`}>
+                        {pedido.status}
+                      </span>
+                    </div>
 
-            <div className="bg-white rounded-2xl p-4 md:p-6 shadow-sm border border-gray-100 w-full overflow-hidden">
-              <h2 className="text-lg font-bold text-gray-800 mb-4">Pedidos Recentes</h2>
-              <div className="w-full overflow-x-auto">
-                <table className="w-full text-left min-w-[500px]">
-                  <thead>
-                    <tr className="text-gray-400 text-sm border-b pb-2">
-                      <th className="pb-3">Nº</th>
-                      <th className="pb-3">Nome</th>
-                      <th className="pb-3">Itens</th>
-                      <th className="pb-3">Valor total</th>
-                      <th className="pb-3">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-gray-700 text-sm">
-                    {[1, 2, 3, 4].map((i) => (
-                      <tr key={i} className="border-b last:border-0 hover:bg-gray-50">
-                        <td className="py-3 font-semibold text-gray-400">#235</td>
-                        <td className="py-3">José de Carvalho</td>
-                        <td className="py-3 text-gray-400">x2</td>
-                        <td className="py-3 font-medium">R$ 159,90</td>
-                        <td className="py-3 text-orange-500 font-semibold">Pendente</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                    <div className="text-sm text-gray-700 font-medium mt-2">
+                      {pedido.itens.map(item => `${item.quantidade}x ${item.nome}`).join(', ')}
+                    </div>
+
+                    <span className="text-xs text-gray-400 block mt-1">
+                      {new Date(pedido.createdAt).toLocaleDateString('pt-BR')} às {new Date(pedido.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="text-base font-bold text-gray-800 block">
+                      R$ {pedido.total.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         )}
 
         {aba === "produtos" && (
-          <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-            <div className="lg:col-span-1">
-              <form onSubmit={salvarProduto} className="bg-white p-4 md:p-6 rounded-2xl border flex flex-col gap-4 w-full sticky top-4">
-                <h2 className="font-bold text-gray-800 text-lg">Adicionar Item ao Catálogo</h2>
-                <input type="text" placeholder="Nome do Produto" value={formProd.nome} onChange={e => setFormProd({...formProd, nome: e.target.value})} className="border p-3 rounded-xl w-full text-sm focus:ring-2 focus:ring-[#F55D22] focus:outline-none" required />
-                <input type="text" placeholder="Descrição" value={formProd.descricao} onChange={e => setFormProd({...formProd, descricao: e.target.value})} className="border p-3 rounded-xl w-full text-sm focus:ring-2 focus:ring-[#F55D22] focus:outline-none" />
-                <div className="grid grid-cols-2 gap-2 w-full">
-                  <input type="number" placeholder="Preço" value={formProd.preco} onChange={e => setFormProd({...formProd, preco: e.target.value})} className="border p-3 rounded-xl w-full text-sm focus:ring-2 focus:ring-[#F55D22] focus:outline-none" required />
-                  <input type="number" placeholder="Qtd" value={formProd.quantidade} onChange={e => setFormProd({...formProd, quantidade: e.target.value})} className="border p-3 rounded-xl w-full text-sm focus:ring-2 focus:ring-[#F55D22] focus:outline-none" required />
-                </div>
-                <input type="date" value={formProd.validade} onChange={e => setFormProd({...formProd, validade: e.target.value})} className="border p-3 rounded-xl w-full text-sm focus:ring-2 focus:ring-[#F55D22] focus:outline-none" required />
-                <input type="text" placeholder="Categoria (Ex: Padaria, Pet)" value={formProd.categoria} onChange={e => setFormProd({...formProd, categoria: e.target.value})} className="border p-3 rounded-xl w-full text-sm focus:ring-2 focus:ring-[#F55D22] focus:outline-none" required />
-                <input type="text" placeholder="Alertas Alérgicos" value={formProd.alertasAlergicos} onChange={e => setFormProd({...formProd, alertasAlergicos: e.target.value})} className="border p-3 rounded-xl w-full text-sm focus:ring-2 focus:ring-[#F55D22] focus:outline-none" />
-                <select value={formProd.tipo} onChange={e => setFormProd({...formProd, tipo: e.target.value})} className="border p-3 rounded-xl bg-white w-full text-sm focus:ring-2 focus:ring-[#F55D22] focus:outline-none">
-                  <option value="avulso">Produto Avulso</option>
-                  <option value="sacola_surpresa">Sacola Surpresa</option>
-                </select>
-                <input
-                  type="text"
-                  placeholder="Caminho da imagem (Ex: public/banana.jpg)"
-                  value={formProd.imagem}
-                  onChange={e => setFormProd({ ...formProd, imagem: e.target.value })}
-                  className="border p-3 rounded-xl w-full text-sm focus:ring-2 focus:ring-[#F55D22] focus:outline-none"
-                />
-                <button className="bg-[#F55D22] text-white py-3 rounded-xl font-bold hover:bg-[#e04e14] transition-colors mt-2 text-sm">Cadastrar Produto</button>
-              </form>
-            </div>
+          <div className="w-full grid grid-cols-3 gap-8">
+            <form onSubmit={salvarProduto} className="bg-white p-6 rounded-2xl border h-fit flex flex-col gap-4">
+              <h2 className="font-bold text-gray-800 text-lg">Adicionar Item ao Catálogo</h2>
+              <input type="text" placeholder="Nome do Produto" value={formProd.nome} onChange={e => setFormProd({...formProd, nome: e.target.value})} className="border p-2 rounded-xl" required />
+              <input type="text" placeholder="Descrição" value={formProd.descricao} onChange={e => setFormProd({...formProd, descricao: e.target.value})} className="border p-2 rounded-xl" />
+              
+              <div className="grid grid-cols-2 gap-2">
+                <input type="number" placeholder="Preço" value={formProd.preco} onChange={e => setFormProd({...formProd, preco: e.target.value})} className="border p-2 rounded-xl" required />
+                <input type="number" placeholder="Qtd" value={formProd.quantidade} onChange={e => setFormProd({...formProd, quantidade: e.target.value})} className="border p-2 rounded-xl" required />
+              </div>
+              
+              <input type="date" value={formProd.validade} onChange={e => setFormProd({...formProd, validade: e.target.value})} className="border p-2 rounded-xl" required />
+              <input type="text" placeholder="Categoria (Ex: Padaria, Pet)" value={formProd.categoria} onChange={e => setFormProd({...formProd, categoria: e.target.value})} className="border p-2 rounded-xl" required />
+              <input type="text" placeholder="Alertas Alérgicos" value={formProd.alertasAlergicos} onChange={e => setFormProd({...formProd, alertasAlergicos: e.target.value})} className="border p-2 rounded-xl" />
+              
+              <select value={formProd.tipo} onChange={e => setFormProd({...formProd, tipo: e.target.value})} className="border p-2 rounded-xl bg-white">
+                <option value="avulso">Produto Avulso</option>
+                <option value="sacola_surpresa">Sacola Surpresa</option>
+              </select>
+
+              {/* Input reposicionado fora do select de forma correta e válida */}
+              <input
+                type="text"
+                placeholder="URL da Imagem (Ex: public/banana.jpg)"
+                value={formProd.imagem}
+                onChange={e => setFormProd({ ...formProd, imagem: e.target.value })}
+                className="border p-2 rounded-xl text-sm"
+              />
+
+              <button className="bg-[#F55D22] text-white py-2 rounded-xl font-bold">Cadastrar Produto</button>
+            </form>
 
             <div className="lg:col-span-2 bg-white p-4 md:p-6 rounded-2xl border w-full">
               <h2 className="font-bold text-lg mb-4">Catálogo Ativo</h2>

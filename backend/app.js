@@ -9,19 +9,13 @@ import path from 'path';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-import Subtopico from './models/subtopicos.js';
-import ImagemModel from './models/imagemModel.js';
-import Informacao from './models/informacao.js';
-import Topico from './models/topicos.js';
 import Usuario from './models/usuario.js';
-import Estatisticas from './models/estatisticas.js';
-import ImagemThumbnail from './imagemThumbnail.js';
-import Imagem from './imagem.js';
 import hyperlink from './models/hyperlink.js';
 import Estabelecimento from './models/estabelecimento.js';
 import Funcionario from './models/funcionario.js';
 import Produto from './models/produto.js';
 import Denuncia from './models/denuncia.js';
+import Pedido from './models/Pedido.js';
 
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
@@ -821,6 +815,42 @@ app.delete('/produtos/:id', async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 });
+
+app.post('/pedidos', async (req, res) => {
+    try {
+        const { estabelecimentoId, usuarioId, itens, total } = req.body;
+
+        const novoPedido = await mongoose.model('Pedido').create({
+            estabelecimentoId,
+            usuarioId,
+            itens,
+            total
+        });
+
+        res.status(201).json(novoPedido);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/pedidos/estabelecimento', async (req, res) => {
+    try {
+        const estId = req.headers['x-estabelecimento-id'];
+
+        if (!estId) {
+            return res.status(400).json({ error: "ID do estabelecimento não fornecido." });
+        }
+
+        const pedidos = await mongoose.model('Pedido')
+            .find({ estabelecimentoId: estId })
+            .sort({ createdAt: -1 });
+
+        res.status(200).json(pedidos);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.get('/debug', (req, res) => {
     res.json({ mensagem: "Servidor vivo na porta 5500!" });
 });
