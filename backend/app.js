@@ -10,7 +10,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 import Usuario from './models/usuario.js';
-import hyperlink from './models/hyperlink.js';
+//import hyperlink from './models/hyperlink.js';
 import Estabelecimento from './models/estabelecimento.js';
 import Funcionario from './models/funcionario.js';
 import Produto from './models/produto.js';
@@ -27,6 +27,9 @@ const PORT = process.env.PORT || 5500;
 const app = express();
 app.use(express.json());
 app.use(cors());
+
+app.use(express.static('public'));
+
 app.listen(PORT, () => {
   console.log(`servidor em: ${PORT}`);
 });
@@ -44,33 +47,6 @@ const mongoURI = process.env.MONGO_URI;
 mongoose.connect(mongoURI)
   .then(() => console.log("Conectado ao MongoDB com .env"))
   .catch((err) => console.error("Erro ao conectar:", err));
-
-// seed hyperlinks
-async function seedHyperlinks() {
-  try {
-    const hyperlinksData = [
-      { nome: 'facebook', link: 'https://www.facebook.com/seu-pagina' },
-      { nome: 'instagram', link: 'https://www.instagram.com/seu-usuario' },
-      { nome: 'youtube', link: 'https://www.youtube.com/seu-canal' },
-      { nome: 'linkedin', link: 'https://www.linkedin.com/company/sua-empresa' },
-      { nome: 'kahoot', link: 'https://kahoot.com/pt-BR' },
-    ];
-
-    for (const hl of hyperlinksData) {
-      const existe = await hyperlink.findOne({ nome: hl.nome });
-      if (!existe) {
-        const novo = new hyperlink(hl);
-        await novo.save();
-        console.log(`Hyperlink seed: Criado ${hl.nome}`);
-      } else {
-        console.log(`Hyperlink seed: Já existe ${hl.nome}`);
-      }
-    }
-    console.log('Seed de hyperlinks concluído');
-  } catch (error) {
-    console.error('Erro ao fazer seed de hyperlinks:', error.message);
-  }
-}
 
 app.get('/produtos', async (req, res) => {
     try {
@@ -203,411 +179,33 @@ app.get('/health', (req, res) => {
 
 // FIM CRUD VISITANTES -----------------------------------------------------------------------------------------------
 
-// CRUD CAPITULOS ----------------------------------------------------------------------------------------------------
-app.post('/subtopicos', async (req, res) => {
-  try {
-    const novoSubtopico = new Subtopico(req.body);
-    const salvo = await novoSubtopico.save();
-    res.status(201).json(salvo);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
-// Listar todos os Subtópicos
-app.get('/subtopicos', async (req, res) => {
-  try {
-    const subtopicos = await Subtopico.find();
-    res.json(subtopicos);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// Listar subtopicos de um topico
-app.get('/topicos/:topicoId/subtopicos', async (req, res) => {
-  try {
-    const subtopicos = await Subtopico.find({ topicoId: req.params.topicoId });
-    res.status(200).json(subtopicos);
-  } catch (err) {
-    res.status(500).json({ message: 'Erro ao listar subtópicos', error: err.message });
-  }
-});
-
-// Buscar Subtópico por ID
-app.get('/subtopicos/:id', async (req, res) => {
-  try {
-    const subtopico = await Subtopico.findById(req.params.id);
-    if (!subtopico) return res.status(404).json({ message: 'Subtópico não encontrado' });
-    res.json(subtopico);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
-// Atualizar Subtópico
-app.put('/subtopicos/:id', async (req, res) => {
-  try {
-    const atualizado = await Subtopico.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
-    if (!atualizado) return res.status(404).json({ message: 'Subtópico não encontrado' });
-    res.json(atualizado);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
-// Deletar Subtópico
-app.delete('/subtopicos/:id', async (req, res) => {
-  try {
-    const subt = await Subtopico.findById(req.params.id);
-    if (!subt) return res.status(404).json({ message: 'Subtópico não encontrado' });
-
-    // remove referência do tópico pai
-    await Topico.findByIdAndUpdate(subt.topicoId, {
-      $pull: { subtopicos: subt._id }
-    });
-
-    await Subtopico.findByIdAndDelete(req.params.id);
-
-    res.json({ message: 'Subtópico deletado com sucesso' });
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
-// FIM CRUD CAPITULOS ----------------------------------------------------------------------------------------------------
-
-// CRUD TÓPICOS --------------------------------------------------------------------------
-
-app.post('/topicos', async (req, res) => {
-  try {
-    const novoTopico = new Topico(req.body)
-    const salvo = await novoTopico.save()
-    res.status(201).json(salvo)
-  } catch (err) {
-    res.status(400).json({ message: err.message })
-  }
-})
-
-app.get('/topicos', async (req, res) => {
-  try {
-    const topicos = await Topico.find()
-    res.json(topicos)
-  } catch (err) {
-    res.status(500).json({ message: err.message })
-  }
-})
-
-app.get('/topicos/:id', async (req, res) => {
-  try {
-    const topico = await Topico.findById(req.params.id)
-    if (!topico) return res.status(404).json({ message: 'Tópico não encontrado' })
-    res.json(topico)
-  } catch (err) {
-    res.status(400).json({ message: err.message })
-  }
-})
-
-app.put('/topicos/:id', async (req, res) => {
-  try {
-    const atualizado = await Topico.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true })
-    if (!atualizado) return res.status(404).json({ message: 'Tópico não encontrado' })
-    res.json(atualizado)
-  } catch (err) {
-    res.status(400).json({ message: err.message })
-  }
-})
-
-app.delete('/topicos/:id', async (req, res) => {
-  try {
-    const deletado = await Topico.findByIdAndDelete(req.params.id)
-    if (!deletado) return res.status(404).json({ message: 'Tópico não encontrado' })
-    res.json({ message: 'Tópico deletado com sucesso' })
-  } catch (err) {
-    res.status(400).json({ message: err.message })
-  }
-})
-
-// FIM CRUD TÓPICOS ----------------------------------------------------------------------
-
-// CRUD DE INFORMAÇÕES! ------------------------------------------------------------------
-
-app.post('/informacao', async (req, res) => {
-  try {
-    const informacao = new Informacao(req.body)
-    await informacao.save()
-    res.status(201).json(informacao)
-  } catch (err) {
-    res.status(400).json({ message: err.message })
-  }
-})
-
-app.get('/informacao', async (req, res) => {
-  try {
-    const informacoes = await Informacao.find()
-    res.json(informacoes)
-  } catch (err) {
-    res.status(500).json({ message: err.message })
-  }
-})
-
-app.get('/informacao/:id', async (req, res) => {
-  try {
-    const info = await Informacao.findById(req.params.id)
-    if (!info) return res.status(404).json({ message: 'Não encontrado' })
-    res.json(info)
-  } catch (err) {
-    res.status(500).json({ message: err.message })
-  }
-})
-
-app.put('/informacao/:id', async (req, res) => {
-  try {
-    const info = await Informacao.findByIdAndUpdate(req.params.id, req.body, { new: true })
-    res.json(info)
-  } catch (err) {
-    res.status(400).json({ message: err.message })
-  }
-})
-
-app.delete('/informacao/:id', async (req, res) => {
-  try {
-    await Informacao.findByIdAndDelete(req.params.id)
-    res.json({ message: 'Informação removida' })
-  } catch (err) {
-    res.status(500).json({ message: err.message })
-  }
-})
-
-// FIM CRUD DE INFORMAÇÕES! --------------------------------------------------------------
-
-// CRUD DE IMAGENS! ----------------------------------------------------------------------
-
-// Código para salvar a imagem nos arquivos
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: 'uploads/temp/',
-    filename: (req, file, cb) => {
-      cb(null, Date.now() + '-' + file.originalname);
-    }
-  })
-});
-
-// Códigos para o banco de dados
-app.post('/images', upload.single('imagem'), async (req, res) => {
-  try {
-
-    const imagem = new Imagem();
-    const thumbnail = new ImagemThumbnail();
-
-    const { filename, path: zipPath } = req.file;
-    const { nomeImagem, topico, subtopico, anotacao } = req.body;
-
-    const pastaBase = await imagem.descompactarZip(zipPath, nomeImagem);
-
-    console.log(pastaBase)
-
-    const resultado = await imagem.prepararPastaMrxs(pastaBase, nomeImagem);
-
-    console.log(resultado.enderecoPastaMrxs);
-    let enderecoThumbnail = null;
-
-    console.log(`mrxsFile: ${resultado.mrxsFile}`);
-    console.log(`mrxsPath: ${resultado.mrxsPath}`);
-
-    try {
-      const thumbnailName = `${path.parse(resultado.mrxsFile).name}.jpg`;
-      enderecoThumbnail = await thumbnail.criarAPartirDeMRXS(resultado.mrxsPath, thumbnailName);
-    } catch (erro) {
-      console.log('Falha ao gerar thumbnail: ', erro.message);
-    }
-
-    const tilesDir = await imagem.preGerarTilesPrincipais(resultado.mrxsFile, resultado.mrxsPath);
-
-    const novaImagem = new ImagemModel({
-      nomeArquivo: resultado.nomeArquivoMrxs,
-      nomeImagem: nomeImagem,
-      enderecoPastaMrxs: resultado.mrxsDir,
-      enderecoThumbnail: enderecoThumbnail,
-      enderecoTiles: tilesDir,
-      topico: topico,
-      subtopico: subtopico,
-      anotacao: anotacao
-    });
-
-    await novaImagem.save();
-
-    res.status(200).json({ message: 'Imagem salva com sucesso!' });
-
-  } catch (error) {
-    console.error("Erro completo ao salvar imagem:", error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.get('/images', async (req, res) => {
-  try {
-    dadosImagens = await ImagemModel.find();
-    res.status(200).json(dadosImagens);
-  } catch (erro) {
-    res.status(500).json({ message: erro.message });
-  }
-});
-
-app.put('/images/:id', async (req, res) => {
-  try {
-    console.log(req.params.id);
-    const info = await ImagemModel.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    res.json(info);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
-app.delete('/images/:id', async (req, res) => {
-  try {
-    const imagem = await ImagemModel.findById(req.params.id);
-    if (!imagem) {
-      return res.json({ error: 'Imagem não encontrada' });
-    }
-    else {
-      if (fs.existsSync(imagem.enderecoPastaMrxs)) {
-        fs.rmSync(imagem.enderecoPastaMrxs, { recursive: true, force: true });
-      }
-
-      if (imagem.enderecoThumbnail && fs.existsSync(imagem.enderecoThumbnail)) {
-        fs.unlinkSync(imagem.enderecoThumbnail);
-      }
-
-      if (imagem.enderecoTiles && fs.existsSync(imagem.enderecoTiles)) {
-        fs.rmSync(imagem.enderecoTiles, { recursive: true, force: true });
-      }
-
-      await ImagemModel.findByIdAndDelete(imagem.id);
-
-      res.status(200).json({ message: 'Imagem apagada com sucesso!' });
-    }
-  }
-  catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// FIM CRUD DE IMAGENS! ------------------------------------------------------------------
-
-// CÓDIGO PARA EXIBIR OS TILES -----------------------------------------------------------
-
-// Código para pegar os metadados da imagem
-app.get('/:imageId/meta.json', async (req, res) => {
-    try {
-        const { imageId } = req.params;
-        const tilesDir = path.join('uploads', 'tiles', imageId);
-        const metaPath = path.join(tilesDir, 'meta.json');
-        
-        console.log(`Buscando metadados: ${metaPath}`);
-        
-        if (await fs.pathExists(metaPath)) {
-            const meta = await fs.readJson(metaPath);
-            console.log('Metadados encontrados:', Object.keys(meta.level_metas || {}).length, 'níveis');
-            res.json(meta);
-        } else {
-            console.log('Metadados não encontrados');
-            res.status(404).json({ error: 'Metadados não encontrados' });
-        }
-    } catch (error) {
-        console.error('Erro ao carregar metadados:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Código para os tiles
-app.get('/tiles/:imageId/:level/:x/:y', async (req, res) => {
-    try {
-        const { imageId, level, x, y } = req.params;
-
-        const imagem = new Imagem();
-        
-        const imagemMrxs = await ImagemModel.findById(imageId);
-        if (!imagemMrxs) {
-            return res.status(404).json({ error: 'Imagem não encontrada' });
-        }
-
-        const tilesDir = imagemMrxs.enderecoTiles;
-        const cleanY = y.replace('.jpg', '');
-        const tilePath = path.join(tilesDir, `level_${level}`, `${x}_${cleanY}.jpg`);
-                
-        console.log(`Buscando tile: ${tilePath}`);
-        
-        if (fs.existsSync(tilePath)) {
-            console.log('Tile pré-gerado encontrado');
-            res.setHeader('Content-Type', 'image/jpeg');
-            return res.sendFile(path.resolve(tilePath));
-        }
-
-        const mrxsPath = path.join(imagemMrxs.enderecoPastaMrxs, imagemMrxs.nomeArquivo);
-        if (!fs.existsSync(mrxsPath)) {
-          return res.status(404).json({ error: 'Imagem MRXS não encontrada' });
-        }
-        
-        console.log(`Chamando Python: level=${level}, x=${x}, y=${cleanY}`);
-        
-        const generatedPath = await imagem.gerarTile(mrxsPath, tilesDir, level, x, cleanY);
-        
-        console.log(`Tile gerado: ${generatedPath}`);
-        
-        if (fs.existsSync(generatedPath)) {
-            res.setHeader('Content-Type', 'image/jpeg');
-            res.sendFile(path.resolve(generatedPath));
-        } else {
-            console.log('Arquivo gerado não encontrado:', generatedPath);
-            res.status(500).json({ error: 'Falha ao gerar tile - arquivo não criado' });
-        }
-        
-    } catch (error) {
-        console.error('Erro:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Código para ver se uma imagem tem tiles
-app.get('/tiles/:imageId/status', async (req, res) => {
-    try {
-        const { imageId } = req.params;
-        const tilesDir = path.join('uploads', 'tiles', imageId);
-        const metaPath = path.join(tilesDir, 'meta.json');
-        
-        const exists = await fs.existsSync(metaPath);
-        res.json({ 
-            hasTiles: exists,
-            imageId: imageId
-        });
-        
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// FIM DO CÓDIGO PARA EXIBIR OS TILES ----------------------------------------------------
-
 // CRUD DE USUÁRIOS! ---------------------------------------------------------------------
-app.post('/cadastro', async (req, res) => {
+app.post("/cadastro", async (req, res) => {
   try {
-    const { email, senha, cargo } = req.body;
-    const usuario = new Usuario({ 
-      email: email, 
-      senha: senha, 
-      cargo: cargo 
-    });
+    const { nome, email, senha, telefone, dataNascimento } = req.body;
 
-    const respMongo = await usuario.save();
-    console.log("Usuário criado:", respMongo);
-    res.status(201).json(respMongo); 
-  } catch (erro) {
-    res.status(409).json({ error: erro.message });
+    if (!nome || !email || !senha || !telefone) {
+      return res.status(400).json({ error: "Todos os campos obrigatórios devem ser preenchidos." });
+    }
+
+    const usuarioExiste = await Usuario.findOne({ email });
+    if (usuarioExiste) {
+      return res.status(409).json({ error: "Este e-mail já está em uso." });
+    }
+
+    const novoUsuario = new Usuario({
+      nome,
+      email,
+      senha,
+      telefone,
+      cargo: "cliente"
+    });
+    await novoUsuario.save();
+
+    res.status(201).json({ message: "Usuário cadastrado com sucesso!" });
+  } catch (error) {
+    console.error("Erro ao realizar cadastro:", error);
+    res.status(500).json({ error: "Erro interno do servidor ao realizar cadastro." });
   }
 });
 
@@ -877,6 +475,148 @@ app.get('/pedidos/estabelecimento', async (req, res) => {
     }
 });
 
+app.get('/estabelecimento/todos', async (req, res) => {
+  try {
+    // Buscando os estabelecimentos no MongoDB
+    const estabelecimentos = await Estabelecimento.find();
+    
+    // Retorna a lista de lojas para o aplicativo
+    res.status(200).json(estabelecimentos);
+  } catch (error) {
+    console.error("Erro ao buscar estabelecimentos:", error);
+    res.status(500).json({ message: "Erro interno do servidor." });
+  }
+});
+
+// ROTA CORRIGIDA: Buscar estabelecimento e itens baseado nos campos reais do banco
+app.get('/estabelecimento/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Busca o estabelecimento
+    const estabelecimento = await Estabelecimento.findById(id);
+    if (!estabelecimento) {
+      return res.status(404).json({ message: "Estabelecimento não encontrado." });
+    }
+
+    // 2. Busca todos os itens (produtos/sacolas) vinculados a este estabelecimentoId
+    // IMPORTANTE: Use o nome exato do seu Model de produtos aqui (ex: Produto ou Item)
+    const itensDoBanco = await Produto.find({ estabelecimentoId: id });
+
+    const categoriasMap = {};
+    const sacolas = [];
+
+    // 3. Separa dinamicamente olhando o seu campo 'tipo' e 'categoria' do banco
+    itensDoBanco.forEach(item => {
+      if (item.tipo === "sacola_surpresa") {
+        // Se for sacola surpresa (conforme a imagem do seu banco)
+        sacolas.push({
+          id: item._id,
+          nome: item.nome,
+          categoria: item.categoria || "Sacola Surpresa",
+          preco: item.preco,
+          precoOriginal: item.precoOriginal || (item.preco * 1.3), // Fallback caso não tenha precoOriginal cadastrado
+          unidade: "1un",
+          imagem: item.imagem || null
+        });
+      } else {
+        // Se for produto comum (Pães, Doces, Laticínios, etc.)
+        const catNome = item.categoria || "Geral";
+
+        if (!categoriasMap[catNome]) {
+          categoriasMap[catNome] = {
+            categoria: catNome,
+            produtos: []
+          };
+        }
+
+        categoriasMap[catNome].produtos.push({
+          id: item._id,
+          nome: item.nome,
+          preco: item.preco,
+          precoOriginal: item.precoOriginal || (item.preco * 1.2),
+          unidade: item.unidade || "un",
+          imagem: item.imagem || null
+        });
+      }
+    });
+
+    // Converte o mapa de categorias para o formato de Array que o index.jsx mapeia
+    const categoriasProdutos = Object.values(categoriasMap);
+
+    // 4. Retorna a resposta perfeita que o mobile espera
+    res.status(200).json({
+      ...estabelecimento._doc,
+      categoriasProdutos,
+      sacolas
+    });
+
+  } catch (error) {
+    console.error("Erro na rota /estabelecimento/:id :", error);
+    res.status(500).json({ message: "Erro interno do servidor." });
+  }
+});
+
+// ROTA: Buscar um único produto/sacola por ID e trazer sugestões
+app.get('/produto/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Use o nome do seu Model cadastrado (ex: Produto)
+    const produtoEncontrado = await Produto.findById(id);
+
+    if (!produtoEncontrado) {
+      return res.status(404).json({ message: "Item não encontrado no banco." });
+    }
+
+    // Busca até 5 outros produtos da mesma loja para listar no carrossel inferior como sugestão
+    const outrosProdutos = await Produto.find({
+      estabelecimentoId: produtoEncontrado.estabelecimentoId,
+      _id: { $ne: id } // Não traz o próprio produto atual repetido na lista
+    }).limit(5);
+
+    res.status(200).json({
+      produto: produtoEncontrado,
+      outrosProdutos: outrosProdutos
+    });
+
+  } catch (error) {
+    console.error("Erro ao buscar detalhes do produto:", error);
+    res.status(500).json({ message: "Erro interno no servidor." });
+  }
+});
+
+app.post("/pedido/novo", async (req, res) => {
+  try {
+    // Certifique-se de que o express.json() está ativo no topo do seu app.js
+    const { estabelecimentoId, usuarioId, itens, total } = req.body;
+
+    console.log("Recebido no Backend:", req.body);
+
+    if (!itens || !Array.isArray(itens) || itens.length === 0) {
+      return res.status(400).json({ message: "O array de itens está vazio ou não foi recebido corretamente." });
+    }
+
+    if (!estabelecimentoId || !usuarioId) {
+      return res.status(400).json({ message: "estabelecimentoId e usuarioId são obrigatórios." });
+    }
+
+    const novoPedido = new Pedido({
+      estabelecimentoId,
+      usuarioId,
+      itens,
+      total
+    });
+
+    const pedidoSalvo = await novoPedido.save();
+    res.status(201).json({ message: "Pedido finalizado!", pedido: pedidoSalvo });
+
+  } catch (error) {
+    console.error("Erro no backend:", error);
+    res.status(500).json({ message: "Erro interno", detalhes: error.message });
+  }
+});
+
 app.get('/debug', (req, res) => {
     res.json({ mensagem: "Servidor vivo na porta 5500!" });
 });
@@ -885,7 +625,7 @@ if (process.env.NODE_ENV !== 'test') {
   conectarAoMongo()
     .then(async () => {
       console.log('Conectado ao MongoDB');
-      await seedHyperlinks();
+      //await seedHyperlinks();
     })
     .catch(err => console.log("Erro conexão Mongo:", err))
 

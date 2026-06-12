@@ -1,6 +1,10 @@
 import mongoose from 'mongoose';
 
 const UsuarioSchema = new mongoose.Schema({
+    nome: {
+        type: String,
+        required: true
+    },
     email: {
         type: String,
         required: true,
@@ -10,10 +14,15 @@ const UsuarioSchema = new mongoose.Schema({
         type: String, 
         required: true
     },
-    cargo: {
+    telefone: {
         type: String,
         required: true
+    },
+    cargo: {
+        type: String,
+        required: true,
+        default: "cliente"
     }
-});
+}, { timestamps: true });
 
 export default mongoose.model('Usuario', UsuarioSchema);

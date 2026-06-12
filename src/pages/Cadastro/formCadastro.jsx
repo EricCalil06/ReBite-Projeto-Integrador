@@ -7,10 +7,12 @@ function FormCadastro({ step, goToNextStep }) {
   const navigate = useNavigate();
   const [aceitouTermos, setAceitouTermos] = useState(false);
 
+  // ADICIONADO: 'senha' inclusa no estado inicial do formulário
   const [formData, setFormData] = useState({
     nome: "",
     dataNascimento: "",
     email: "",
+    senha: "", 
     telefone: "",
   });
 
@@ -124,6 +126,21 @@ function FormCadastro({ step, goToNextStep }) {
                   />
                 </div>
 
+                {/* ADICIONADO: Campo de Senha no Step 2 abaixo do E-mail */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    Senha
+                  </label>
+                  <input
+                    type="password"
+                    name="senha"
+                    value={formData.senha}
+                    onChange={handleChange}
+                    placeholder="Crie uma senha forte"
+                    className="w-full px-5 py-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F55D22]"
+                  />
+                </div>
+
                 <div>
                   <label className="block text-sm font-semibold text-gray-800 mb-2">
                     Telefone
@@ -142,7 +159,7 @@ function FormCadastro({ step, goToNextStep }) {
 
             {step === 3 && (
               <>
-                <div className="bg-gray-50 p-4 rounded-2xl border border-dashed border-gray-300">
+                <div className="bg-gray-50 p-4 rounded-2xl border border-dashed border-gray-300 flex flex-col gap-2">
                   <p className="text-sm text-gray-600">
                     <strong>Nome:</strong> {formData.nome}
                   </p>
@@ -154,6 +171,11 @@ function FormCadastro({ step, goToNextStep }) {
 
                   <p className="text-sm text-gray-600">
                     <strong>E-mail:</strong> {formData.email}
+                  </p>
+
+                  {/* ADICIONADO: Ocultação visual da senha na listagem final por segurança */}
+                  <p className="text-sm text-gray-600">
+                    <strong>Senha:</strong> {"•".repeat(formData.senha.length || 6)}
                   </p>
 
                   <p className="text-sm text-gray-600">

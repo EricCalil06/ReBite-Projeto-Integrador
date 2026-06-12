@@ -1,48 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
-  View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, Dimensions,
+  View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, Dimensions, ActivityIndicator
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router"; // Importado useLocalSearchParams
 
 const { width } = Dimensions.get("window");
 
-const imagemLoja = require("../../../assets/imagemLojas/PadariaSeuJorge.png");
+const imagemLojaPadrao = require("../../../assets/imagemLojas/PadariaSeuJorge.png");
 const imagemLeite = require("../../../assets/imagemProdutos/LeiteDesnatadoItalac1L.png");
-
-const loja = {
-  nome: "Padaria do Seu Jorge",
-  descricao: "Lorem ipsum dolor sit amet consectetur adipiscing elit ut et massa mi. Aliquam in hendrerit urna.",
-  endereco: "Estr. das Lágrimas, 1666 - Mauá, São Caetano do Sul - SP, 09580-500",
-  avaliacao: 4,
-  reviews: 21,
-  distancia: "1.2 km de você",
-};
-
-const categoriasProdutos = [
-  {
-    categoria: "Laticínios",
-    produtos: [
-      { id: 1, nome: "Leite Desnatado Italac 1L", preco: 9.09, precoOriginal: 10.07, unidade: "1L", imagem: imagemLeite },
-      { id: 2, nome: "Leite Desnatado Italac 1L", preco: 9.09, precoOriginal: 10.07, unidade: "1L", imagem: imagemLeite },
-      { id: 3, nome: "Leite Desnatado Italac 1L", preco: 9.09, precoOriginal: 10.07, unidade: "1L", imagem: imagemLeite },
-    ]
-  },
-  {
-    categoria: "Biscoitos",
-    produtos: [
-      { id: 4, nome: "Bolacha recheada sabor morango", preco: 9.09, precoOriginal: 10.07, unidade: "1un", imagem: null },
-      { id: 5, nome: "Bolacha recheada sabor morango", preco: 9.09, precoOriginal: 10.07, unidade: "1un", imagem: null },
-    ]
-  }
-];
-
-const sacolas = [
-  { id: 1, nome: "Sacola Surpresa", categoria: "Vegetariana", preco: 9.09, precoOriginal: 10.07, unidade: "1L", imagem: null },
-  { id: 2, nome: "Sacola Surpresa", categoria: "Vegana", preco: 9.09, precoOriginal: 10.07, unidade: "1L", imagem: null },
-  { id: 3, nome: "Sacola Surpresa", categoria: "Sem Gluten", preco: 9.09, precoOriginal: 10.07, unidade: "1L", imagem: null },
-  { id: 4, nome: "Sacola Surpresa", categoria: "Sem Restrições", preco: 9.09, precoOriginal: 10.07, unidade: "1L", imagem: null },
-];
 
 function Estrelas({ quantidade }) {
   return (
@@ -55,16 +21,84 @@ function Estrelas({ quantidade }) {
 }
 
 function calcularDesconto(preco, precoOriginal) {
+  if (!precoOriginal) return 0;
   return Math.round(((precoOriginal - preco) / precoOriginal) * 100);
 }
 
 export default function LojaScreen() {
+  const { id } = useLocalSearchParams(); // Pega o ID da loja vindo da navegação anterior
   const [aba, setAba] = useState("catalogo");
+  
+  // Estados para gerenciar a requisição da API
+  const [loja, setLoja] = useState(null);
+  const [categoriasProdutos, setCategoriasProdutos] = useState([]);
+  const [sacolas, setSacolas] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+
+  useEffect(() => {
+    async function buscarDadosDaLoja() {
+      try {
+        // Se você não tiver um ID dinâmico ainda por estar testando direto na rota, 
+        // use um ID estático de teste do seu banco: const lojaId = id || "SEU_ID_DO_MONGO_AQUI";
+        const lojaId = id; 
+        
+        // Chamada para o seu backend usando o IP do emulador do Android Studio (10.0.2.2)
+        const response = await fetch(`http://10.0.2.2:5500/estabelecimento/${lojaId}`);
+        
+        if (response.ok) {
+          const dados = await response.json();
+          
+          // Mapeia os dados retornados pela sua API
+          setLoja({
+            nome: dados.nome,
+            descricao: dados.descricao || "Sem descrição disponível.",
+            endereco: dados.endereco || "Endereço não informado",
+            avaliacao: dados.avaliacao || 4,
+            reviews: dados.reviews || 0,
+            distancia: dados.distancia || "1.2 km de você",
+          });
+
+          // Preenche os produtos e sacolas se o seu backend já os retornar agrupados
+          setCategoriasProdutos(dados.categoriasProdutos || []);
+          setSacolas(dados.sacolas || []);
+        } else {
+          console.error("Erro ao buscar dados da loja");
+        }
+      } catch (error) {
+        console.error("Erro de conexão com o servidor:", error);
+      } finally {
+        setCarregando(false);
+      }
+    }
+
+    buscarDadosDaLoja();
+  }, [id]);
+
+  // Se estiver buscando as informações da API, exibe o loading na tela
+  if (carregando) {
+    return (
+      <View style={[styles.screen, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#F05A28" />
+      </View>
+    );
+  }
+
+  // Tratativa caso o ID não seja encontrado ou a rota falhe
+  if (!loja) {
+    return (
+      <View style={[styles.screen, { justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
+        <Text style={{ textAlign: 'center', marginBottom: 20 }}>Estabelecimento não encontrado.</Text>
+        <TouchableOpacity style={{ backgroundColor: '#F05A28', padding: 12, borderRadius: 20 }} onPress={() => router.back()}>
+          <Text style={{ color: '#fff', fontWeight: 'bold' }}>Voltar</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.imagemContainer}>
-        <Image source={imagemLoja} style={styles.imagemLoja} resizeMode="cover" />
+        <Image source={imagemLojaPadrao} style={styles.imagemLoja} resizeMode="cover" />
         <TouchableOpacity style={styles.voltar} onPress={() => router.back()}>
           <Feather name="arrow-left" size={20} color="#111" />
         </TouchableOpacity>
@@ -101,71 +135,81 @@ export default function LojaScreen() {
 
       {aba === "catalogo" && (
         <View style={styles.catalogoContainer}>
-          {categoriasProdutos.map((cat, index) => (
-            <View key={index} style={styles.categoriaSection}>
-              <Text style={styles.categoriaTitulo}>{cat.categoria}</Text>
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false} 
-                contentContainerStyle={styles.scrollHorizontal}
-              >
-                {cat.produtos.map((produto) => (
-                  <TouchableOpacity
-                    key={produto.id}
-                    style={styles.produtoCardHorizontal}
-                    onPress={() => router.push(`/produto/${produto.id}`)}
-                  >
-                    <View style={styles.produtoImagemHorizontal}>
-                      {produto.imagem && (
-                        <Image source={produto.imagem} style={styles.imagemProdutoHorizontal} resizeMode="contain" />
-                      )}
-                      <TouchableOpacity style={styles.botaoAdicionarHorizontal}>
-                        <Text style={styles.plusSign}>+</Text>
-                      </TouchableOpacity>
-                    </View>
-                    <Text style={styles.produtoPrecoVerde}>R$ {produto.preco.toFixed(2)} / {produto.unidade}</Text>
-                    <View style={styles.descontoRow}>
-                      <Text style={styles.produtoPrecoRiscado}>R$ {produto.precoOriginal.toFixed(2)}</Text>
-                      <View style={styles.badgeLaranja}>
-                        <Text style={styles.textoBadgeLaranja}>-{calcularDesconto(produto.preco, produto.precoOriginal)}%</Text>
+          {categoriasProdutos.length === 0 ? (
+            <Text style={styles.avisoVazio}>Nenhum produto cadastrado nesta loja.</Text>
+          ) : (
+            categoriasProdutos.map((cat, index) => (
+              <View key={index} style={styles.categoriaSection}>
+                <Text style={styles.categoriaTitulo}>{cat.categoria}</Text>
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={false} 
+                  contentContainerStyle={styles.scrollHorizontal}
+                >
+                  {cat.produtos.map((produto) => (
+                    <TouchableOpacity
+                      key={produto.id || produto._id}
+                      style={styles.produtoCardHorizontal}
+                      onPress={() => router.push(`/produto/${produto.id || produto._id}`)}
+                    >
+                      <View style={styles.produtoImagemHorizontal}>
+                        {produto.imagem ? (
+                          <Image source={{ uri: produto.imagem }} style={styles.imagemProdutoHorizontal} resizeMode="contain" />
+                        ) : (
+                          <Image source={imagemLeite} style={styles.imagemProdutoHorizontal} resizeMode="contain" />
+                        )}
+                        <TouchableOpacity style={styles.botaoAdicionarHorizontal}>
+                          <Text style={styles.plusSign}>+</Text>
+                        </TouchableOpacity>
                       </View>
-                    </View>
-                    <Text style={styles.produtoNomeFino} numberOfLines={2}>{produto.nome}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          ))}
+                      <Text style={styles.produtoPrecoVerde}>R$ {produto.preco.toFixed(2)} / {produto.unidade || "un"}</Text>
+                      <View style={styles.descontoRow}>
+                        <Text style={styles.produtoPrecoRiscado}>R$ {produto.precoOriginal.toFixed(2)}</Text>
+                        <View style={styles.badgeLaranja}>
+                          <Text style={styles.textoBadgeLaranja}>-{calcularDesconto(produto.preco, produto.precoOriginal)}%</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.produtoNomeFino} numberOfLines={2}>{produto.nome}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            ))
+          )}
         </View>
       )}
 
       {aba === "sacolas" && (
         <View style={styles.grid}>
-          {sacolas.map((sacola) => (
-            <TouchableOpacity
-              key={sacola.id}
-              style={styles.produtoCard}
-              onPress={() => router.push(`/produto/${sacola.id}`)}
-            >
-              <View style={styles.produtoImagem}>
-                {sacola.imagem && (
-                  <Image source={sacola.imagem} style={styles.imagemProduto} resizeMode="contain" />
-                )}
-                <TouchableOpacity style={styles.botaoAdicionar}>
-                  <Feather name="plus" size={20} color="#fff" />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.precoRow}>
-                <Text style={styles.produtoPreco}>R$ {sacola.preco.toFixed(2)} / {sacola.unidade}</Text>
-                <View style={styles.descontoBadge}>
-                  <Text style={styles.descontoTexto}>-{calcularDesconto(sacola.preco, sacola.precoOriginal)}%</Text>
+          {sacolas.length === 0 ? (
+            <Text style={styles.avisoVazio}>Nenhuma sacola disponível no momento.</Text>
+          ) : (
+            sacolas.map((sacola) => (
+              <TouchableOpacity
+                key={sacola.id || sacola._id}
+                style={styles.produtoCard}
+                onPress={() => router.push(`/produto/${sacola.id || sacola._id}`)}
+              >
+                <View style={styles.produtoImagem}>
+                  {sacola.imagem && (
+                    <Image source={{ uri: sacola.imagem }} style={styles.imagemProduto} resizeMode="contain" />
+                  )}
+                  <TouchableOpacity style={styles.botaoAdicionar}>
+                    <Feather name="plus" size={20} color="#fff" />
+                  </TouchableOpacity>
                 </View>
-              </View>
-              <Text style={styles.produtoPrecoOriginal}>R$ {sacola.precoOriginal.toFixed(2)}</Text>
-              <Text style={styles.produtoNome}>{sacola.nome}</Text>
-              <Text style={styles.sacolaCategoria}>{sacola.categoria}</Text>
-            </TouchableOpacity>
-          ))}
+                <View style={styles.precoRow}>
+                  <Text style={styles.produtoPreco}>R$ {sacola.preco.toFixed(2)} / {sacola.unidade || "1un"}</Text>
+                  <View style={styles.descontoBadge}>
+                    <Text style={styles.descontoTexto}>-{calcularDesconto(sacola.preco, sacola.precoOriginal)}%</Text>
+                  </View>
+                </View>
+                <Text style={styles.produtoPrecoOriginal}>R$ {sacola.precoOriginal.toFixed(2)}</Text>
+                <Text style={styles.produtoNome}>{sacola.nome}</Text>
+                <Text style={styles.sacolaCategoria}>{sacola.categoria}</Text>
+              </TouchableOpacity>
+            ))
+          )}
         </View>
       )}
     </ScrollView>
@@ -222,4 +266,5 @@ const styles = StyleSheet.create({
   produtoPrecoOriginal: { fontSize: 12, color: "#aaa", textDecorationLine: "line-through" },
   produtoNome: { fontSize: 12, color: "#555" },
   sacolaCategoria: { fontSize: 12, color: "#F05A28", fontWeight: "700" },
+  avisoVazio: { paddingHorizontal: 20, fontSize: 14, color: "#888", fontStyle: "italic" }
 });

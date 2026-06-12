@@ -1,17 +1,7 @@
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { useState, useEffect } from "react"; // Importado hooks para gerenciar o estado e ciclo de vida
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
-
-const lojas = [
-  { id: 1, nome: "Padaria do Seu Jorge", avaliacao: 4, reviews: 21 },
-  { id: 2, nome: "ATACADAO", avaliacao: 4, reviews: 61 },
-  { id: 3, nome: "Ortifruti doZê", avaliacao: 4, reviews: 0 },
-  { id: 4, nome: "Padaria Bela Vitória", avaliacao: 4, reviews: 21 },
-  { id: 5, nome: "Padaria do Seu Jorge", avaliacao: 4, reviews: 71 },
-  { id: 6, nome: "Pizzaria Best Food", avaliacao: 4, reviews: 11 },
-  { id: 7, nome: "Padaria do Seu Jorge", avaliacao: 4, reviews: 11 },
-  { id: 8, nome: "Padaria do Seu Jorge", avaliacao: 4, reviews: 11 },
-];
 
 function Estrelas({ quantidade }) {
   return (
@@ -24,33 +14,77 @@ function Estrelas({ quantidade }) {
 }
 
 export default function ListaLojas() {
+  // Estados para armazenar as lojas vindas do banco e o controle de carregamento
+  const [lojas, setLojas] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+
+  useEffect(() => {
+    async function carregarLojas() {
+      try {
+        // IP padrão para acessar o localhost da máquina a partir do emulador Android (10.0.2.2)
+        const response = await fetch("http://10.0.2.2:5500/estabelecimento/todos");
+        
+        if (response.ok) {
+          const dados = await response.json();
+          setLojas(dados);
+        } else {
+          console.error("Erro ao buscar a lista de estabelecimentos");
+        }
+      } catch (error) {
+        console.error("Erro de conexão ao buscar lojas:", error);
+      } finally {
+        setCarregando(false);
+      }
+    }
+
+    carregarLojas();
+  }, []);
+
+  // Se o banco ainda estiver respondendo, exibe um indicador de progresso limpo
+  if (carregando) {
+    return (
+      <View style={[styles.container, { paddingVertical: 20, alignItems: "center" }]}>
+        <ActivityIndicator size="small" color="#F05A28" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.titulo}>Lojas</Text>
-      {lojas.map((loja) => (
-        <TouchableOpacity
-          key={loja.id}
-          style={styles.item}
-          onPress={() => router.push(`/loja/${loja.id}`)}
-        >
-          <View style={styles.logo}>
-            <Feather name="shopping-bag" size={24} color="#F05A28" />
-          </View>
-          <View style={styles.info}>
-            <Text style={styles.nome}>{loja.nome}</Text>
-            <View style={styles.avaliacaoRow}>
-              <Estrelas quantidade={loja.avaliacao} />
-              {loja.reviews > 0 && (
-                <Text style={styles.reviews}>({loja.reviews})</Text>
-              )}
+      
+      {lojas.length === 0 ? (
+        <Text style={styles.distancia}>Nenhum estabelecimento encontrado.</Text>
+      ) : (
+        lojas.map((loja) => (
+          <TouchableOpacity
+            key={loja._id} // Alterado para _id padrão do MongoDB
+            style={styles.item}
+            onPress={() => router.push(`/loja/${loja._id}`)} // Navega passando o ID real do banco
+          >
+            <View style={styles.logo}>
+              <Feather name="shopping-bag" size={24} color="#F05A28" />
             </View>
-            <View style={styles.distanciaRow}>
-              <Feather name="map-pin" size={12} color="#F05A28" />
-              <Text style={styles.distancia}>1.2 km de você</Text>
+            <View style={styles.info}>
+              <Text style={styles.nome}>{loja.nome}</Text>
+              
+              <View style={styles.avaliacaoRow}>
+                {/* Se não houver avaliação cadastrada no banco, assume o fallback padrão de 4 */}
+                <Estrelas quantidade={loja.avaliacao || 4} />
+                {(loja.reviews > 0 || loja.reviews === 0) && (
+                  <Text style={styles.reviews}>({loja.reviews || 0})</Text>
+                )}
+              </View>
+              
+              <View style={styles.distanciaRow}>
+                <Feather name="map-pin" size={12} color="#F05A28" />
+                {/* Se o banco tiver endereço/distância cadastrados, exibe o real, senão o mock padrão */}
+                <Text style={styles.distancia}>{loja.distancia || "1.2 km de você"}</Text>
+              </View>
             </View>
-          </View>
-        </TouchableOpacity>
-      ))}
+          </TouchableOpacity>
+        ))
+      )}
     </View>
   );
 }

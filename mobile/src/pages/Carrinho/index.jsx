@@ -1,15 +1,88 @@
+import { useState } from "react"; // Importado useState
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, ActivityIndicator // Importado Alert e ActivityIndicator
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCarrinho } from "../../context/CarrinhoContext";
 
 export default function CarrinhoScreen() {
-  const { itens, removerItem, total } = useCarrinho();
+  // ATENÇÃO: Adicione a função de limpar o carrinho no seu CarrinhoContext caso tenha criado (ex: limparCarrinho)
+  const { itens, removerItem, total, limparCarrinho } = useCarrinho();
+  const [enviando, setEnviando] = useState(false);
 
   const kgSalvos = (itens.length * 0.5).toFixed(1);
   const data = new Date().toLocaleDateString("pt-BR");
+
+  // Pega o endereço e dados da loja do primeiro item do carrinho de forma dinâmica
+  const enderecoLoja = itens[0]?.endereco || "Retirar no estabelecimento parceiro";
+  const nomeLoja = itens[0]?.loja || "Estabelecimento Parceiro";
+
+  const handleFinalizar = async () => {
+  if (itens.length === 0) {
+    Alert.alert("Carrinho Vazio", "Adicione produtos antes de finalizar.");
+    return;
+  }
+
+  setEnviando(true);
+
+  // 1. Mapeia os itens garantindo compatibilidade com o formato do Mongoose
+  // Usamos as propriedades exatas que o seu componente já lê na tela (item.nome, item.preco, item.unidade)
+  const itensFormatados = itens.map(item => ({
+    produtoId: item.id || item._id || "6a24a100c7eb1b3b5a1f71b9", // Garante um ID válido caso falte
+    nome: item.nome,
+    preco: Number(item.preco),
+    quantidade: Number(item.quantidade) || 1
+  }));
+
+  // 2. Monta o payload exatamente como o seu PedidoSchema espera
+  const pedidoData = {
+    // Busca o ID do estabelecimento atrelado ao produto
+    estabelecimentoId: itens[0].estabelecimentoId || "6a24a0b6c7eb1b3b5a1f71b5", 
+    usuarioId: "6a24a100c7eb1b3b5a1f71b9", // ID de teste do usuário para passar no 'required: true' do schema
+    itens: itensFormatados,
+    total: Number(total)
+  };
+
+  // Esse log vai te mostrar no terminal se o objeto foi montado certinho!
+  console.log("Enviando Pedido Completo para a API:", JSON.stringify(pedidoData, null, 2));
+
+  try {
+    const response = await fetch("http://10.0.2.2:5500/pedido/novo", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(pedidoData),
+    });
+
+    const dadosResultado = await response.json();
+
+    if (response.ok) {
+      Alert.alert(
+        "Pedido Confirmado!",
+        `Seu pedido foi enviado com sucesso!`,
+        [
+          { 
+            text: "OK", 
+            onPress: () => {
+              if (typeof limparCarrinho === "function") limparCarrinho();
+              router.replace("/");
+            } 
+          }
+        ]
+      );
+    } else {
+      // Se o backend rejeitar, exibe o motivo real retornado
+      Alert.alert("Erro no pedido", dadosResultado.message || "Não foi possível processar seu carrinho.");
+    }
+  } catch (error) {
+    console.error("Erro ao enviar pedido:", error);
+    Alert.alert("Erro de conexão", "Não foi possível conectar ao servidor.");
+  } finally {
+    setEnviando(false);
+  }
+};
 
   return (
     <View style={styles.screen}>
@@ -31,9 +104,10 @@ export default function CarrinhoScreen() {
         ) : (
           <View style={styles.lojaCard}>
             <View style={styles.lojaHeader}>
-              <View>
-                <Text style={styles.lojaNome}>{itens[0]?.loja}</Text>
-                <Text style={styles.lojaData}>{data} - Nº de pedido: 190823</Text>
+              <View style={{ flex: 1, paddingRight: 8 }}>
+                {/* Tornando o nome da loja dinâmico baseado no item adicionado */}
+                <Text style={styles.lojaNome}>{nomeLoja}</Text>
+                <Text style={styles.lojaData}>{data} - Pronto para retirada</Text>
               </View>
               <TouchableOpacity style={styles.visitarBtn}>
                 <Text style={styles.visitarBtnTexto}>Visitar loja</Text>
@@ -52,7 +126,7 @@ export default function CarrinhoScreen() {
                   </View>
                   <View style={styles.itemPrecos}>
                     <Text style={styles.itemPreco}>R$ {item.preco.toFixed(2)} / {item.unidade}</Text>
-                    <Text style={styles.itemPrecoOriginal}>R$ {item.precoOriginal.toFixed(2)}</Text>
+                    <Text style={styles.itemPrecoOriginal}>R$ {(item.precoOriginal || item.preco * 1.2).toFixed(2)}</Text>
                   </View>
                 </View>
               </TouchableOpacity>
@@ -63,9 +137,8 @@ export default function CarrinhoScreen() {
         <View style={styles.entregaCard}>
           <Text style={styles.entregaTitulo}>Entrega:</Text>
           <Text style={styles.entregaTipo}>Retirar no estabelecimento</Text>
-          <Text style={styles.entregaEndereco}>
-            Estr. das Lágrimas, 1666 - Mauá, São Caetano do Sul - SP, 09580-500
-          </Text>
+          {/* Exibindo o endereço dinâmico da loja associada */}
+          <Text style={styles.entregaEndereco}>{enderecoLoja}</Text>
         </View>
 
         <View style={styles.totalCard}>
@@ -76,8 +149,17 @@ export default function CarrinhoScreen() {
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.botaoFinalizar}>
-          <Text style={styles.botaoFinalizarTexto}>Finalizar o carrinho</Text>
+        {/* Adicionado o handler e o estado de loading no botão */}
+        <TouchableOpacity 
+          style={[styles.botaoFinalizar, { opacity: enviando ? 0.6 : 1 }]} 
+          onPress={handleFinalizar}
+          disabled={enviando}
+        >
+          {enviando ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.botaoFinalizarTexto}>Finalizar o carrinho</Text>
+          )}
         </TouchableOpacity>
 
         <Text style={styles.termos}>

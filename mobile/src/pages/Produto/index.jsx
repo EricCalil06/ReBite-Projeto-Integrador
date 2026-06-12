@@ -1,44 +1,90 @@
+import { useState, useEffect } from "react"; // Importado hooks para estado e ciclo de vida
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, Dimensions,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, Dimensions, ActivityIndicator
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router"; // Importado useLocalSearchParams
 import { useCarrinho } from "../../context/CarrinhoContext";
 
 const { width } = Dimensions.get("window");
 
-const produto = {
-  id: 1,
-  nome: "Leite Desnatado - Italac 1L",
-  preco: 9.09,
-  precoOriginal: 10.07,
-  unidade: "1L",
-  descricao: "Lorem ipsum dolor sit amet consectetur adipiscing elit ut et massa mi. Aliquam in hendrerit urna. Pellentesque sit amet sapien fringilla.",
-  validade: "6 dias",
-  alergicos: "Contém traços de Lactose, Glúten",
-  loja: "Padaria do Seu Jorge",
-};
-
-const outrosProdutos = [
-  { id: 1, nome: "Leite Desnatado Italac 1L", preco: 9.09, precoOriginal: 10.07, unidade: "1L" },
-  { id: 2, nome: "Bolacha recheada sabor morango", preco: 9.09, precoOriginal: 10.07, unidade: "1un" },
-  { id: 3, nome: "Leite Desnatado Italac 1L", preco: 9.09, precoOriginal: 10.07, unidade: "1L" },
-];
-
 export default function ProdutoScreen() {
+  const { id } = useLocalSearchParams(); // Captura o ID do produto ou sacola clicada
   const { adicionarItem } = useCarrinho();
 
+  // Estados para gerenciar os dados da API
+  const [produto, setProduto] = useState(null);
+  const [outrosProdutos, setOutrosProdutos] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+
+  useEffect(() => {
+    async function buscarDadosDoProduto() {
+      try {
+        // Chamada para buscar o produto pelo ID no IP padrão do emulador
+        const response = await fetch(`http://10.0.2.2:5500/produto/${id}`);
+        
+        if (response.ok) {
+          const dados = await response.json();
+          setProduto(dados.produto);
+          setOutrosProdutos(dados.outrosProdutos || []);
+        } else {
+          console.error("Erro ao buscar dados do produto");
+        }
+      } catch (error) {
+        console.error("Erro de conexão ao buscar produto:", error);
+      } finally {
+        setCarregando(false);
+      }
+    }
+
+    if (id) {
+      buscarDadosDoProduto();
+    }
+  }, [id]);
+
   const handleAdicionar = () => {
+    if (!produto) return;
+
     adicionarItem({
-      id: produto.id,
+      id: produto._id || produto.id,
       nome: produto.nome,
       preco: produto.preco,
-      precoOriginal: produto.precoOriginal,
-      unidade: produto.unidade,
-      loja: produto.loja,
+      precoOriginal: produto.precoOriginal || (produto.preco * 1.2),
+      unidade: produto.unidade || "1un",
+      loja: produto.loja || "Estabelecimento",
     });
     router.push("/carrinho");
   };
+
+  // Função auxiliar para formatar a validade ISO do banco em algo legível (Ex: 02/02/2026)
+  const formatarValidade = (dataIso) => {
+    if (!dataIso) return "Não informada";
+    try {
+      const data = new Date(dataIso);
+      return data.toLocaleDateString("pt-BR");
+    } catch {
+      return dataIso;
+    }
+  };
+
+  if (carregando) {
+    return (
+      <View style={[styles.screen, { justifyContent: "center", alignItems: "center" }]}>
+        <ActivityIndicator size="large" color="#F05A28" />
+      </View>
+    );
+  }
+
+  if (!produto) {
+    return (
+      <View style={[styles.screen, { justifyContent: "center", alignItems: "center", padding: 20 }]}>
+        <Text style={{ textAlign: "center", marginBottom: 20 }}>Produto não encontrado.</Text>
+        <TouchableOpacity style={styles.botaoCarrinho} onPress={() => router.back()}>
+          <Text style={[styles.botaoCarrinhoTexto, { paddingHorizontal: 20 }]}>Voltar</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
@@ -53,10 +99,12 @@ export default function ProdutoScreen() {
       <View style={styles.info}>
         <Text style={styles.nome}>{produto.nome}</Text>
         <View style={styles.precoRow}>
-          <Text style={styles.preco}>R$ {produto.preco.toFixed(2)} / {produto.unidade}</Text>
-          <Text style={styles.precoOriginal}>R$ {produto.precoOriginal.toFixed(2)}</Text>
+          <Text style={styles.preco}>R$ {produto.preco?.toFixed(2)} / {produto.unidade || "1un"}</Text>
+          <Text style={styles.precoOriginal}>
+            R$ {(produto.precoOriginal || produto.preco * 1.2).toFixed(2)}
+          </Text>
         </View>
-        <Text style={styles.descricao}>{produto.descricao}</Text>
+        <Text style={styles.descricao}>{produto.descricao || "Sem descrição disponível."}</Text>
 
         <TouchableOpacity style={styles.botaoCarrinho} onPress={handleAdicionar}>
           <Text style={styles.botaoCarrinhoTexto}>Adicionar ao carrinho</Text>
@@ -64,27 +112,33 @@ export default function ProdutoScreen() {
 
         <Text style={styles.secaoTitulo}>Alertas</Text>
         <Text style={styles.alerta}>
-          Consumir até: <Text style={styles.alertaDestaque}>{produto.validade}</Text>
+          Consumir até: <Text style={styles.alertaDestaque}>{formatarValidade(produto.validade)}</Text>
         </Text>
-        <Text style={styles.alerta}>Alérgicos: {produto.alergicos}</Text>
+        <Text style={styles.alerta}>Alérgicos: {produto.alertasAlergicos || produto.alergicos || "Nenhum alerta registrado."}</Text>
 
-        <Text style={styles.secaoTitulo}>Outros do catálogo</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.outrosScroll}>
-          {outrosProdutos.map((p) => (
-            <TouchableOpacity
-              key={p.id}
-              style={styles.outroCard}
-              onPress={() => router.replace(`/produto/${p.id}`)}
-            >
-              <View style={styles.outroImagem}>
-                <Feather name="package" size={24} color="#F05A28" />
-              </View>
-              <Text style={styles.outroPreco}>R$ {p.preco.toFixed(2)} / {p.unidade}</Text>
-              <Text style={styles.outroPrecoOriginal}>R$ {p.precoOriginal.toFixed(2)}</Text>
-              <Text style={styles.outroNome} numberOfLines={2}>{p.nome}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        {outrosProdutos.length > 0 && (
+          <>
+            <Text style={styles.secaoTitulo}>Outros do catálogo</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.outrosScroll}>
+              {outrosProdutos.map((p) => (
+                <TouchableOpacity
+                  key={p._id || p.id}
+                  style={styles.outroCard}
+                  onPress={() => router.replace(`/produto/${p._id || p.id}`)}
+                >
+                  <View style={styles.outroImagem}>
+                    <Feather name="package" size={24} color="#F05A28" />
+                  </View>
+                  <Text style={styles.outroPreco}>R$ {p.preco?.toFixed(2)} / {p.unidade || "un"}</Text>
+                  <Text style={styles.outroPrecoOriginal}>
+                    R$ {(p.precoOriginal || p.preco * 1.2).toFixed(2)}
+                  </Text>
+                  <Text style={styles.outroNome} numberOfLines={2}>{p.nome}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </>
+        )}
       </View>
     </ScrollView>
   );
