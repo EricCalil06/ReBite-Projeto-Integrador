@@ -17,7 +17,7 @@ function PainelLoja() {
     categoria: "", tipo: "avulso", alertasAlergicos: "", 
     descricao: "", imagem: ""
   });
-  const [formFunc, setFormFunc] = useState({ nome: "", funcao: "Colaborador" });
+  const [formFunc, setFormFunc] = useState({ email: "" });
 
   const headers = { "Content-Type": "application/json", "x-usuario-id": usuarioId };
 
@@ -29,7 +29,7 @@ function PainelLoja() {
         if (res.ok) setProdutos(await res.json());
       }
       if (aba === "funcionarios") {
-        const res = await fetch("http://localhost:5500/funcionarios", { headers });
+        const res = await fetch("http://localhost:5500/funcionarios/da-loja", { headers });
         if (res.ok) setFuncionarios(await res.json());
       }
     } catch (err) {
@@ -126,14 +126,43 @@ function PainelLoja() {
 
   async function salvarFuncionario(e) {
     e.preventDefault();
-    await fetch("http://localhost:5500/funcionarios", {
-      method: "POST",
-      headers,
-      body: JSON.stringify(formFunc)
-    });
-    setFormFunc({ nome: "", funcao: "Colaborador" });
-    carregarDados();
+    try {
+      const res = await fetch("http://localhost:5500/funcionarios/cadastrar", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ email: formFunc.email })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`s ${data.message}`);
+        setFormFunc({ email: "" });
+        carregarDados();
+      } else {
+        alert(`n ${data.error}`);
+      }
+    } catch (err) {
+      console.error("Erro ao cadastrar funcionário:", err);
+      alert("Erro ao conectar ao servidor.");
+    }
   }
+  async function removerFuncionario(id) {
+    if (!confirm("Deseja remover este funcionário? Ele voltará a ser cliente.")) return;
+    try {
+        const res = await fetch(`http://localhost:5500/funcionarios/da-loja/${id}`, {
+            method: "DELETE",
+            headers
+        });
+        const data = await res.json();
+        if (res.ok) {
+            alert(`s ${data.message}`);
+            carregarDados();
+        } else {
+            alert(`n ${data.error}`);
+        }
+    } catch (err) {
+        alert("Erro ao conectar ao servidor.");
+    }
+}
 
   async function deletarItem(rota, id) {
     await fetch(`http://localhost:5500/${rota}/${id}`, { method: "DELETE" });
@@ -366,13 +395,20 @@ function PainelLoja() {
             <div className="lg:col-span-1">
               <form onSubmit={salvarFuncionario} className="bg-white p-4 md:p-6 rounded-2xl border flex flex-col gap-4 w-full sticky top-4">
                 <h2 className="font-bold text-gray-800 text-lg">Registrar Funcionário</h2>
-                <input type="text" placeholder="Nome Completo" value={formFunc.nome} onChange={e => setFormFunc({...formFunc, nome: e.target.value})} className="border p-3 rounded-xl w-full text-sm focus:ring-2 focus:ring-gray-800 focus:outline-none" required />
-                <select value={formFunc.funcao} onChange={e => setFormFunc({...formFunc, funcao: e.target.value})} className="border p-3 rounded-xl bg-white w-full text-sm focus:ring-2 focus:ring-gray-800 focus:outline-none">
-                  <option value="Colaborador">Colaborador</option>
-                  <option value="Repositor">Repositor</option>
-                  <option value="ADM">ADM</option>
-                </select>
-                <button className="bg-gray-800 text-white py-3 rounded-xl font-bold hover:bg-gray-900 transition-colors mt-2 text-sm">Adicionar Membro</button>
+                <p className="text-sm text-gray-500">
+                  Informe o e-mail de um cliente já cadastrado para promovê-lo a funcionário.
+                </p>
+                <input
+                  type="email"
+                  placeholder="E-mail do usuário"
+                  value={formFunc.email}
+                  onChange={e => setFormFunc({ email: e.target.value })}
+                  className="border p-3 rounded-xl w-full text-sm focus:ring-2 focus:ring-gray-800 focus:outline-none"
+                  required
+                />
+                <button className="bg-gray-800 text-white py-3 rounded-xl font-bold hover:bg-gray-900 transition-colors mt-2 text-sm">
+                  Promover a Funcionário
+                </button>
               </form>
             </div>
 
@@ -385,11 +421,12 @@ function PainelLoja() {
                   funcionarios.map(f => (
                     <div key={f._id} className="flex justify-between items-center p-4 border rounded-xl hover:bg-gray-50 gap-4 w-full transition-all">
                       <div className="min-w-0 flex-1">
-                        <p className="font-bold text-gray-700 text-sm md:text-base break-words">
-                          {f.nome} — <span className="text-gray-400 text-xs md:text-sm font-normal italic">{f.funcao}</span>
-                        </p>
+                        <div>
+                          <p className="font-bold text-gray-700 text-sm md:text-base break-words">{f.nome}</p>
+                          <p className="text-xs text-gray-400">{f.email} · {f.telefone}</p>
+                        </div>
                       </div>
-                      <button onClick={() => deletarItem('funcionarios', f._id)} className="text-red-400 hover:text-red-600 font-medium text-xs bg-gray-50 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors whitespace-nowrap">
+                      <button onClick={() => removerFuncionario(f._id)} className="text-red-400 hover:text-red-600 font-medium text-xs bg-gray-50 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors whitespace-nowrap">
                         Remover
                       </button>
                     </div>

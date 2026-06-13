@@ -40,27 +40,27 @@ function Login() {
          hasEstablishment: data.cargo === "admin"
        });
 
-        if (data.email === "B@B.com" || data.cargo === "admin") {
+        if (data.cargo === "admin") {
           try {
             const resLoja = await fetch("http://localhost:5500/estabelecimento/checar", {
               method: "GET",
               headers: {
                 "Content-Type": "application/json",
-                "x-usuario-id": data.id // Envia o ID do admin logado
+                "x-usuario-id": data.id
               }
             });
-
             const dadosLoja = await resLoja.json();
-
             if (dadosLoja.existe) {
-              navigate("/painel-loja"); // Já tem loja, vai direto pro painel
+              navigate("/painel-loja");
             } else {
-              navigate("/cadastrar-loja"); // Não tem loja, vai cadastrar
+              navigate("/cadastrar-loja");
             }
           } catch (err) {
             console.error("Erro ao checar estabelecimento:", err);
             navigate("/cadastrar-loja");
           }
+        } else if (data.cargo === "funcionario") {
+          navigate("/debug");
         } else {
           navigate("/pagina-cliente");
         }

@@ -167,6 +167,92 @@ app.delete('/funcionarios/:id', async (req, res) => {
     res.json({ message: "Funcionário removido" });
 });
 
+// Cadastrar funcionário: altera cargo de cliente existente para "funcionario"
+// SUBSTITUIR a rota POST /funcionarios/cadastrar
+app.post('/funcionarios/cadastrar', async (req, res) => {
+    try {
+        const donoId = req.headers['x-usuario-id'];
+        if (!donoId) return res.status(401).json({ error: "Usuário não identificado." });
+
+        const dono = await Usuario.findById(donoId);
+        if (!dono || dono.cargo !== 'admin') {
+            return res.status(403).json({ error: "Apenas administradores podem cadastrar funcionários." });
+        }
+
+        // Busca a loja do admin
+        const loja = await Estabelecimento.findOne({ donoId });
+        if (!loja) {
+            return res.status(404).json({ error: "Você precisa ter uma loja cadastrada antes de adicionar funcionários." });
+        }
+
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ error: "Email do funcionário é obrigatório." });
+
+        const usuario = await Usuario.findOne({ email });
+        if (!usuario) return res.status(404).json({ error: "Usuário com este email não encontrado." });
+
+        if (usuario.cargo === 'admin') {
+            return res.status(400).json({ error: "Não é possível alterar o cargo de um administrador." });
+        }
+
+        if (usuario.cargo === 'funcionario') {
+            return res.status(400).json({ error: "Este usuário já é funcionário." });
+        }
+
+        usuario.cargo = 'funcionario';
+        usuario.estabelecimentoId = loja._id;
+        await usuario.save();
+
+        res.status(200).json({ message: `${usuario.nome} agora é funcionário da ${loja.nome}!`, usuario });
+    } catch (error) {
+        console.error("Erro ao cadastrar funcionário:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// ADICIONAR esta nova rota (pode substituir o GET /funcionarios existente ou coexistir)
+app.get('/funcionarios/da-loja', async (req, res) => {
+    try {
+        const donoId = req.headers['x-usuario-id'];
+        if (!donoId) return res.status(401).json({ error: "Usuário não identificado." });
+
+        const loja = await Estabelecimento.findOne({ donoId });
+        if (!loja) return res.status(404).json({ error: "Loja não encontrada." });
+
+        const funcionarios = await Usuario.find(
+            { cargo: 'funcionario', estabelecimentoId: loja._id },
+            'nome email telefone estabelecimentoId createdAt' // só retorna campos necessários, omite senha
+        );
+
+        res.status(200).json(funcionarios);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.delete('/funcionarios/da-loja/:id', async (req, res) => {
+    try {
+        const donoId = req.headers['x-usuario-id'];
+        if (!donoId) return res.status(401).json({ error: "Usuário não identificado." });
+
+        const dono = await Usuario.findById(donoId);
+        if (!dono || dono.cargo !== 'admin') {
+            return res.status(403).json({ error: "Apenas administradores podem remover funcionários." });
+        }
+
+        const usuario = await Usuario.findById(req.params.id);
+        if (!usuario) return res.status(404).json({ error: "Funcionário não encontrado." });
+
+        usuario.cargo = 'cliente';
+        usuario.estabelecimentoId = null;
+        await usuario.save();
+
+        res.status(200).json({ message: `${usuario.nome} foi removido da equipe.` });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // --- CRUD PRODUTOS (Avulsos e Sacolas Surpresa) ---
 app.get('/produtos', async (req, res) => {
     try {

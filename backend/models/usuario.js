@@ -22,7 +22,12 @@ const UsuarioSchema = new mongoose.Schema({
         type: String,
         required: true,
         default: "cliente"
-    }
+    },
+    estabelecimentoId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Estabelecimento',
+    default: null
+}
 }, { timestamps: true });
 
 export default mongoose.model('Usuario', UsuarioSchema);
