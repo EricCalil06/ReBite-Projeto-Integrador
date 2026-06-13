@@ -52,6 +52,7 @@ export default function ProdutoScreen() {
       precoOriginal: produto.precoOriginal || (produto.preco * 1.2),
       unidade: produto.unidade || "1un",
       loja: produto.loja || "Estabelecimento",
+      estabelecimentoId: produto.estabelecimentoId,
     });
     router.push("/carrinho");
   };

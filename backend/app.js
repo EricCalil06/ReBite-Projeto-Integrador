@@ -551,6 +551,28 @@ app.get('/pedidos/estabelecimento', async (req, res) => {
     }
 });
 
+app.get('/pedidos/usuario/:usuarioId', async (req, res) => {
+    try {
+        const { usuarioId } = req.params;
+
+        console.log("Buscando pedidos para usuarioId:", usuarioId);
+
+        if (!mongoose.Types.ObjectId.isValid(usuarioId)) {
+            return res.status(400).json({ error: "ID de usuário inválido." });
+        }
+
+        const pedidos = await mongoose.model('Pedido').find({ 
+            usuarioId: new mongoose.Types.ObjectId(usuarioId) 
+        })
+        .sort({ createdAt: -1 });
+
+        res.status(200).json(pedidos);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+//------------------------------- PEDIDOS --------------------------------------------
+
 // ROTA: Buscar um único produto/sacola por ID e trazer sugestões
 app.get('/produto/:id', async (req, res) => {
   try {

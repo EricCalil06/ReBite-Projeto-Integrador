@@ -8,29 +8,31 @@ import {
   StyleSheet,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-
-const faqData = [
-  { question: "Minha entrega não veio certo, o que eu posso fazer?" },
-  { question: "Como eu faço para pagar as minhas compras?" },
-  { question: "Onde eu vejo os métodos de entrega da loja?" },
-  { question: "Perdi a senha da minha conta. O que eu posso fazer?" },
-  { question: "Para que serve o código de segurança nas entregas?" },
-];
+import { useAuth } from "../../context/AuthContext";
+import { router } from "expo-router";
 
 export default function Conta() {
   const [openFaq, setOpenFaq] = useState(null);
+  const { user, logout } = useAuth();  // adicionar isso
 
   const toggleFaq = (index) => {
     setOpenFaq(openFaq === index ? null : index);
   };
 
+  const faqData = [
+    { question: "Minha entrega não veio certo, o que eu posso fazer?" },
+    { question: "Como eu faço para pagar as minhas compras?" },
+    { question: "Onde eu vejo os métodos de entrega da loja?" },
+    { question: "Perdi a senha da minha conta. O que eu posso fazer?" },
+    { question: "Para que serve o código de segurança nas entregas?" },
+  ];
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
 
       <View style={styles.profileCard}>
         <View style={styles.profileInfo}>
           <Text style={styles.welcome}>Bem-vindo!</Text>
-          <Text style={styles.username}>Usuário</Text>
+          <Text style={styles.username}>{user?.nome || "Usuário"}</Text>
           <Text style={styles.congrats}>Parabéns! Você economizou até agora:</Text>
           <Text style={styles.kg}>22kg de Alimento</Text>
         </View>
@@ -80,6 +82,12 @@ export default function Conta() {
           </TouchableOpacity>
         ))}
       </View>
+      <TouchableOpacity
+        style={styles.logoutButton}
+        onPress={() => { logout(); router.replace("/login"); }}
+      >
+        <Text style={styles.logoutText}>Sair da conta</Text>
+      </TouchableOpacity>
 
       <Text style={styles.support}>
         Não encontrou sua dúvida no FAQ?{" "}
@@ -120,4 +128,7 @@ const styles = StyleSheet.create({
 
   support: { fontSize: 13, color: "#555", textAlign: "center", lineHeight: 20 },
   supportLink: { color: "#F05A28", fontWeight: "600" },
+
+  logoutButton: { borderWidth: 1, borderColor: "#E5E7EB", borderRadius: 999, paddingVertical: 14, alignItems: "center", marginTop: 8, marginBottom: 20 },
+  logoutText: { color: "#EF4444", fontWeight: "bold", fontSize: 15 },
 });

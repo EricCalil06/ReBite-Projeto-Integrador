@@ -7,6 +7,7 @@ import {
   Image,
   StyleSheet,
   ScrollView,
+  Alert
 } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 import { router } from "expo-router";
@@ -19,9 +20,30 @@ export default function Login() {
   const [senha, setSenha] = useState("");
   const [manterConectado, setManterConectado] = useState(false);
 
-  const handleLogin = () => {
-    login();
-    router.replace("/");
+  const handleLogin = async () => {
+    if (!email || !senha) {
+      Alert.alert("Atenção", "Preencha e-mail e senha.");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://10.0.2.2:5500/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, senha }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        login({ id: data.id, nome: data.nome, cargo: data.cargo, token: data.token });
+        router.replace("/");
+      } else {
+        Alert.alert("Erro", data.mensagem || "Credenciais inválidas.");
+      }
+    } catch (err) {
+      Alert.alert("Erro de conexão", "Verifique se o servidor está ligado.");
+    }
   };
 
   return (
