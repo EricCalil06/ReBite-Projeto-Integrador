@@ -24,9 +24,14 @@ function NavBar() {
           <div className="hidden md:flex gap-4 items-center">
             <Link to="/" className="hover:text-[#F55D22] transition-colors">Início</Link>
             <Link to="/sobre" className="hover:text-[#F55D22] transition-colors">Sobre</Link>
+            
+            {/* Lógica condicional para Admin */}
             {user?.cargo === 'admin' && (
-              <Link to="/painel-loja" className="hhover:text-[#F55D22] transition-colors">
-                Painel do Estabelecimento
+              <Link 
+                to={user.hasEstablishment ? "/painel-loja" : "/cadastrar-loja"} 
+                className="hover:text-[#F55D22] transition-colors"
+              >
+                {user.hasEstablishment ? "Painel do Estabelecimento" : "Cadastrar uma Loja"}
               </Link>
             )}
           </div>
@@ -92,16 +97,26 @@ function NavBar() {
                 Meu Perfil
               </button>
 
-              {user.hasEstablishment && (
-                <button onClick={() => setMenuAberto(false)} className="bg-green-600 p-3 text-white font-semibold w-full rounded-xl">
-                  Acessar Loja
-                </button>
+              {/* Lógica para Administradores */}
+              {user.cargo === 'admin' && (
+                <Link
+                  to={user.hasEstablishment ? "/painel-loja" : "/cadastrar-loja"}
+                  onClick={() => setMenuAberto(false)}
+                  className="bg-green-600 p-3 text-white font-semibold w-full rounded-xl text-center"
+                >
+                  {user.hasEstablishment ? "Acessar Loja" : "Cadastrar uma Loja"}
+                </Link>
               )}
 
-              <button onClick={() => setMenuAberto(false)} className="bg-red-600 p-3 text-white font-semibold w-full rounded-xl"
-                  onClick={logout}
-                  className="bg-red-600 p-3 text-white font-semibold w-auto rounded-xl hover:bg-red-700 transition-colors whitespace-nowrap">
-                  Sair
+              {/* Botão Sair Corrigido */}
+              <button
+                onClick={() => {
+                  logout();
+                  setMenuAberto(false);
+                }}
+                className="bg-red-600 p-3 text-white font-semibold w-full rounded-xl hover:bg-red-700 transition-colors"
+              >
+                Sair
               </button>
             </div>
           )}
