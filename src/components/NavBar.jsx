@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import logoReBiteH from "../assets/logoReBiteH.png";
+import { useContext } from "react";
+import { AuthContext } from "/src/context/AuthContext.jsx";
 
-function NavBar({ user }) {
+function NavBar() {
+  const { user, logout } = useContext(AuthContext);
+  console.log("Logout disponível na NavBar:", logout);
   const [menuAberto, setMenuAberto] = useState(false);
 
   return (
@@ -20,6 +24,11 @@ function NavBar({ user }) {
           <div className="hidden md:flex gap-4 items-center">
             <Link to="/" className="hover:text-[#F55D22] transition-colors">Início</Link>
             <Link to="/sobre" className="hover:text-[#F55D22] transition-colors">Sobre</Link>
+            {user?.cargo === 'admin' && (
+              <Link to="/painel-loja" className="hhover:text-[#F55D22] transition-colors">
+                Painel do Estabelecimento
+              </Link>
+            )}
           </div>
         </div>
 
@@ -31,21 +40,20 @@ function NavBar({ user }) {
               </button>
             </Link>
           ) : (
-            <>
-              <button className="bg-[#F55D22] p-3 text-white font-bold w-auto rounded-xl hover:bg-[#e04e14] transition-colors whitespace-nowrap">
-                Meu Perfil
-              </button>
+            <div className="flex items-center gap-4">
+              <span className="font-bold text-gray-800">{user.nome}</span>
 
-              {user.hasEstablishment && (
-                <button className="bg-green-600 p-3 text-white font-semibold w-auto rounded-xl hover:bg-green-700 transition-colors whitespace-nowrap">
-                  Acessar Loja
-                </button>
-              )}
+              {/* Círculo da foto de perfil */}
+              <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 font-bold border-2 border-white shadow-sm">
+                {user?.nome ? user.nome.charAt(0).toUpperCase() : "?"}
+              </div>
 
-              <button className="bg-red-600 p-3 text-white font-semibold w-auto rounded-xl hover:bg-red-700 transition-colors whitespace-nowrap">
-                Sair
+                <button
+                  onClick={logout}
+                  className="bg-red-600 p-3 text-white font-semibold w-auto rounded-xl hover:bg-red-700 transition-colors whitespace-nowrap">
+                    Sair
               </button>
-            </>
+            </div>
           )}
         </div>
 
@@ -90,8 +98,10 @@ function NavBar({ user }) {
                 </button>
               )}
 
-              <button onClick={() => setMenuAberto(false)} className="bg-red-600 p-3 text-white font-semibold w-full rounded-xl">
-                Sair
+              <button onClick={() => setMenuAberto(false)} className="bg-red-600 p-3 text-white font-semibold w-full rounded-xl"
+                  onClick={logout}
+                  className="bg-red-600 p-3 text-white font-semibold w-auto rounded-xl hover:bg-red-700 transition-colors whitespace-nowrap">
+                  Sair
               </button>
             </div>
           )}

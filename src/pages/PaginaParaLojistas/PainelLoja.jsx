@@ -160,10 +160,8 @@ function PainelLoja() {
     <div className="min-h-screen bg-[#FDFBF9] font-sans flex flex-col w-full overflow-x-hidden">
       <nav className="bg-white border-b border-gray-100 px-4 md:px-12 py-4 flex justify-between items-center relative w-full z-50">
         <div className="flex items-center gap-4 lg:gap-8">
-          <img src={logoReBiteH} alt="Logo" className="w-20 md:w-24" />
-          <span className="hidden md:inline text-gray-400">|</span>
           <div className="hidden md:flex items-center gap-4 lg:gap-8">
-            <button onClick={() => setAba("pedidos")} className={`font-semibold text-sm lg:text-base whitespace-nowrap ${aba === 'pedidos' ? 'text-[#F55D22]' : 'text-gray-600'}`}>Painel do Estabelecimento</button>
+            <button onClick={() => setAba("pedidos")} className={`font-semibold text-sm lg:text-base whitespace-nowrap ${aba === 'pedidos' ? 'text-[#F55D22]' : 'text-gray-600'}`}>Pedidos da Loja</button>
             <button onClick={() => setAba("produtos")} className={`font-semibold text-sm lg:text-base whitespace-nowrap ${aba === 'produtos' ? 'text-[#F55D22]' : 'text-gray-600'}`}>Produtos/Sacolas</button>
             <button onClick={() => setAba("funcionarios")} className={`font-semibold text-sm lg:text-base whitespace-nowrap ${aba === 'funcionarios' ? 'text-[#F55D22]' : 'text-gray-600'}`}>Funcionários</button>
           </div>
@@ -171,10 +169,10 @@ function PainelLoja() {
 
         <div className="flex items-center gap-3">
           <div className="text-right hidden sm:block">
-            <p className="text-sm font-bold text-gray-800">B@B.com</p>
-            <p className="text-xs text-[#F55D22]">Administrador Lojista</p>
+            <p className="text-sm font-bold text-gray-800"></p>
+            <p className="text-xs text-[#F55D22]"></p>
           </div>
-          <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+          <div></div>
           
           <button onClick={() => setMenuAberto(!menuAberto)} className="md:hidden p-2 text-gray-600 focus:outline-none">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

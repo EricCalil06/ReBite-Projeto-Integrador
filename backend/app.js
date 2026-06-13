@@ -1,4 +1,3 @@
-// 1. Importação das bibliotecas (ES Modules)
 import 'dotenv/config'; 
 import express from 'express';
 import cors from 'cors';
@@ -10,7 +9,6 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 import Usuario from './models/usuario.js';
-//import hyperlink from './models/hyperlink.js';
 import Estabelecimento from './models/estabelecimento.js';
 import Funcionario from './models/funcionario.js';
 import Produto from './models/produto.js';
@@ -48,136 +46,31 @@ mongoose.connect(mongoURI)
   .then(() => console.log("Conectado ao MongoDB com .env"))
   .catch((err) => console.error("Erro ao conectar:", err));
 
-app.get('/produtos', async (req, res) => {
-    try {
-        const estId = req.headers['x-estabelecimento-id']; 
-        
-        let filtro = {};
-        if (estId) {
-            filtro = { estabelecimentoId: estId };
-        }
-
-        const produtos = await mongoose.model('Produto').find(filtro);
-        res.status(200).json(produtos);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+function obterModelEstabelecimento() {
+    if (mongoose.models.Estabelecimento) {
+        return mongoose.models.Estabelecimento;
     }
-});
+    const schema = new mongoose.Schema({
+        donoId: { type: String, required: true },
+        nome: { type: String, required: true }
+    }, { collection: 'estabelecimentos' });
+    
+    return mongoose.model('Estabelecimento', schema);
+}
 
-// CRUD VISITANTES -----------------------------------------------------------------------------------------------
-
-// ROTA GET - Buscar estatísticas
-app.get('/estatisticas', async (req, res) => {
-  try {
-    console.log('BACKEND: Buscando estatísticas...');
-
-    const estatisticas = await Estatisticas.find({})
-      .sort({ data: -1 })
-      .limit(30);
-
-    const totalAcessos = estatisticas.reduce((total, estat) => total + estat.totalAcessos, 0);
-
-    const todosUsuariosUnicos = new Set();
-    estatisticas.forEach(estat => {
-      estat.usuariosUnicos.forEach(userId => todosUsuariosUnicos.add(userId));
-    });
-
-    const acessosPorDia = {};
-    const hoje = new Date();
-
-    for (let i = 0; i < 7; i++) {
-      const data = new Date(hoje);
-      data.setDate(data.getDate() - (6 - i));
-      const dataStr = data.toISOString().split('T')[0];
-
-      const estatDia = estatisticas.find(e => e.data === dataStr);
-      acessosPorDia[dataStr] = estatDia ? estatDia.totalAcessos : 0;
+async function obterEstabelecimento(req, res, next) {
+    const donoId = req.headers['x-usuario-id'];
+    if (!donoId) return res.status(401).json({ error: "Usuário não identificado." });
+    
+    let est = await Estabelecimento.findOne({ donoId });
+    if (!est) {
+        // Cria um provisório se o Admin não tiver para não quebrar o fluxo
+        est = new Estabelecimento({ nome: "Meu Estabelecimento Provisório", donoId });
+        await est.save();
     }
-
-    console.log('BACKEND: Estatísticas enviadas - Total:', totalAcessos);
-
-    res.json({
-      success: true,
-      totalAcessos: totalAcessos,
-      totalUsuariosUnicos: todosUsuariosUnicos.size,
-      acessosPorDia: acessosPorDia,
-      ultimaAtualizacao: new Date(),
-      totalDiasRegistrados: estatisticas.length
-    });
-  } catch (error) {
-    console.error('BACKEND: Erro ao buscar estatísticas:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// POST - Registrar visita ao site (página inicial/geral)
-
-app.post('/estatisticas/visita', async (req, res) => {
-  try {
-    console.log('BACKEND: ROTA POST /estatisticas/visita CHAMADA!');
-
-    const dataAcesso = new Date(req.body.dataAcesso || Date.now());
-    const dataFormatada = dataAcesso.toISOString().split('T')[0];
-    const hora = dataAcesso.getHours();
-    const pagina = req.body.pagina || 'site_geral';
-    const userId = req.body.userId;
-
-    console.log('BACKEND: Processando - Data:', dataFormatada, 'Hora:', hora, 'Página:', pagina, 'User:', userId);
-
-    let estatistica = await Estatisticas.findOne({ data: dataFormatada });
-
-    if (estatistica) {
-      console.log('BACKEND: Estatística existente. Acessos antes:', estatistica.totalAcessos);
-      estatistica.totalAcessos += 1;
-      estatistica.acessosPorHora[hora] = (estatistica.acessosPorHora[hora] || 0) + 1;
-      estatistica.paginasAcessadas[pagina] = (estatistica.paginasAcessadas[pagina] || 0) + 1;
-      estatistica.markModified('acessosPorHora');
-      estatistica.markModified('paginasAcessadas');
-
-      if (userId && !estatistica.usuariosUnicos.includes(userId)) {
-        estatistica.usuariosUnicos.push(userId);
-        estatistica.markModified('usuariosUnicos');
-      }
-
-      estatistica.ultimaAtualizacao = new Date();
-    } else {
-      console.log('BACKEND: Criando NOVA estatística');
-      estatistica = new Estatisticas({
-        data: dataFormatada,
-        totalAcessos: 1,
-        acessosPorHora: { [hora]: 1 },
-        paginasAcessadas: { [pagina]: 1 },
-        usuariosUnicos: userId ? [userId] : [],
-        ultimaAtualizacao: new Date()
-      });
-    }
-
-    await estatistica.save();
-    console.log('BACKEND: Visita registrada. Acessos agora:', estatistica.totalAcessos);
-
-    res.json({
-      success: true,
-      message: 'Visita registrada com sucesso!',
-      estatisticaId: estatistica._id,
-      totalAcessos: estatistica.totalAcessos
-    });
-
-  } catch (error) {
-    console.error('BACKEND: Erro ao registrar visita:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-// Health check (opcional, mas útil)
-app.get('/health', (req, res) => {
-  console.log('Health check chamado');
-  res.json({ success: true, message: 'Backend OK' });
-});
-
-// FIM CRUD VISITANTES -----------------------------------------------------------------------------------------------
+    req.estabelecimentoId = est._id;
+    next();
+}
 
 // CRUD DE USUÁRIOS! ---------------------------------------------------------------------
 app.post("/cadastro", async (req, res) => {
@@ -231,24 +124,31 @@ app.post('/login', async (req, res) => {
     { expiresIn: "7d" }
   );
 
-  res.status(200).json({ token: token, cargo: usuarioExiste.cargo, id: usuarioExiste._id });
+  res.status(200).json({
+    token: token,
+    cargo: usuarioExiste.cargo,
+    id: usuarioExiste._id,
+    nome: usuarioExiste.nome // Adicione esta linha
+  });
 });
 
-async function obterEstabelecimento(req, res, next) {
-    const donoId = req.headers['x-usuario-id'];
-    if (!donoId) return res.status(401).json({ error: "Usuário não identificado." });
-    
-    let est = await Estabelecimento.findOne({ donoId });
-    if (!est) {
-        // Cria um provisório se o Admin não tiver para não quebrar o fluxo
-        est = new Estabelecimento({ nome: "Meu Estabelecimento Provisório", donoId });
-        await est.save();
-    }
-    req.estabelecimentoId = est._id;
-    next();
-}
+app.get('/me', async (req, res) => {
+    const token = req.headers['authorization']?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: "Sem token" });
 
-// --- CRUD FUNCIONÁRIOS ---
+    try {
+        const decoded = jwt.verify(token, "id-secreto");
+        const usuario = await Usuario.findOne({ email: decoded.email });
+        if (!usuario) return res.status(404).json({ error: "Usuário não encontrado" });
+        
+        // Retorna dados públicos do usuário
+        res.status(200).json({ nome: usuario.nome, id: usuario._id });
+    } catch (e) {
+        res.status(401).json({ error: "Token inválido" });
+    }
+});
+
+// ------------------- CRUD FUNCIONÁRIOS ----------------------------------------------------------------
 app.post('/funcionarios', obterEstabelecimento, async (req, res) => {
     try {
         const novo = new Funcionario({ ...req.body, estabelecimentoId: req.estabelecimentoId });
@@ -268,6 +168,22 @@ app.delete('/funcionarios/:id', async (req, res) => {
 });
 
 // --- CRUD PRODUTOS (Avulsos e Sacolas Surpresa) ---
+app.get('/produtos', async (req, res) => {
+    try {
+        const estId = req.headers['x-estabelecimento-id']; 
+        
+        let filtro = {};
+        if (estId) {
+            filtro = { estabelecimentoId: estId };
+        }
+
+        const produtos = await mongoose.model('Produto').find(filtro);
+        res.status(200).json(produtos);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.post('/produtos', obterEstabelecimento, async (req, res) => {
     try {
         const novo = new Produto({ ...req.body, estabelecimentoId: req.estabelecimentoId });
@@ -291,6 +207,38 @@ app.delete('/produtos/:id', async (req, res) => {
     res.json({ message: "Deletado com sucesso" });
 });
 
+// READ: Listar apenas os produtos do vendedor logado
+app.get('/produtos/vendedor/:vendedorId', async (req, res) => {
+    try {
+        const produtos = await Produto.find({ vendedorId: req.params.vendedorId });
+        res.status(200).json(produtos);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// UPDATE: Editar dados do produto
+app.put('/produtos/:id', async (req, res) => {
+    try {
+        const produtoAtualizado = await Produto.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.status(200).json(produtoAtualizado);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// DELETE: Remover produto da sacola
+app.delete('/produtos/:id', async (req, res) => {
+    try {
+        await Produto.findByIdAndDelete(req.params.id);
+        res.status(200).json({ message: "Produto removido com sucesso!" });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+// ------- PRODUTOS --------------
+
 // --- ROTA DE DENÚNCIAS ---
 app.post('/denuncias', async (req, res) => {
     try {
@@ -304,18 +252,6 @@ app.get('/denuncias', async (req, res) => {
     const lista = await Denuncia.find().populate('estabelecimentoId');
     res.json(lista);
 });
-
-function obterModelEstabelecimento() {
-    if (mongoose.models.Estabelecimento) {
-        return mongoose.models.Estabelecimento;
-    }
-    const schema = new mongoose.Schema({
-        donoId: { type: String, required: true },
-        nome: { type: String, required: true }
-    }, { collection: 'estabelecimentos' });
-    
-    return mongoose.model('Estabelecimento', schema);
-}
 
 app.post('/estabelecimento', async (req, res) => {
     try {
@@ -392,85 +328,6 @@ app.get('/estabelecimento/checar', async (req, res) => {
             return res.status(200).json({ existe: false });
         }
     } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-
-// READ: Listar apenas os produtos do vendedor logado
-app.get('/produtos/vendedor/:vendedorId', async (req, res) => {
-    try {
-        const produtos = await Produto.find({ vendedorId: req.params.vendedorId });
-        res.status(200).json(produtos);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// UPDATE: Editar dados do produto
-app.put('/produtos/:id', async (req, res) => {
-    try {
-        const produtoAtualizado = await Produto.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        res.status(200).json(produtoAtualizado);
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-});
-
-// DELETE: Remover produto da sacola
-app.delete('/produtos/:id', async (req, res) => {
-    try {
-        await Produto.findByIdAndDelete(req.params.id);
-        res.status(200).json({ message: "Produto removido com sucesso!" });
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-});
-
-app.post('/pedidos', async (req, res) => {
-    try {
-        const { estabelecimentoId, usuarioId, itens, total } = req.body;
-
-        const novoPedido = await mongoose.model('Pedido').create({
-            estabelecimentoId,
-            usuarioId,
-            itens,
-            total
-        });
-
-        res.status(201).json(novoPedido);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.get('/pedidos/estabelecimento', async (req, res) => {
-    try {
-        const estId = req.headers['x-estabelecimento-id'];
-
-        if (!estId) {
-            return res.status(400).json({ error: "ID do estabelecimento não fornecido." });
-        }
-
-        // Acessa o Types diretamente de dentro do mongoose importado no topo do arquivo
-        const { Types } = mongoose;
-
-        // Valida se o ID recebido tem o formato correto de 24 caracteres hexadecimais
-        if (!Types.ObjectId.isValid(estId)) {
-            return res.status(400).json({ error: "ID do estabelecimento em formato inválido." });
-        }
-
-        const Pedido = mongoose.model('Pedido');
-        
-        // Convertemos a String estId em um ObjectId real usando o Types nativo do mongoose
-        const pedidos = await Pedido.find({ 
-            estabelecimentoId: new Types.ObjectId(estId) 
-        })
-        .sort({ createdAt: -1 });
-
-        res.status(200).json(pedidos);
-    } catch (error) {
-        console.error("Erro ao buscar pedidos do estabelecimento:", error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -557,6 +414,57 @@ app.get('/estabelecimento/:id', async (req, res) => {
   }
 });
 
+
+//--------------- ESTABELECIMENTO -----------------------
+
+app.post('/pedidos', async (req, res) => {
+    try {
+        const { estabelecimentoId, usuarioId, itens, total } = req.body;
+
+        const novoPedido = await mongoose.model('Pedido').create({
+            estabelecimentoId,
+            usuarioId,
+            itens,
+            total
+        });
+
+        res.status(201).json(novoPedido);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/pedidos/estabelecimento', async (req, res) => {
+    try {
+        const estId = req.headers['x-estabelecimento-id'];
+
+        if (!estId) {
+            return res.status(400).json({ error: "ID do estabelecimento não fornecido." });
+        }
+
+        // Acessa o Types diretamente de dentro do mongoose importado no topo do arquivo
+        const { Types } = mongoose;
+
+        // Valida se o ID recebido tem o formato correto de 24 caracteres hexadecimais
+        if (!Types.ObjectId.isValid(estId)) {
+            return res.status(400).json({ error: "ID do estabelecimento em formato inválido." });
+        }
+
+        const Pedido = mongoose.model('Pedido');
+        
+        // Convertemos a String estId em um ObjectId real usando o Types nativo do mongoose
+        const pedidos = await Pedido.find({ 
+            estabelecimentoId: new Types.ObjectId(estId) 
+        })
+        .sort({ createdAt: -1 });
+
+        res.status(200).json(pedidos);
+    } catch (error) {
+        console.error("Erro ao buscar pedidos do estabelecimento:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // ROTA: Buscar um único produto/sacola por ID e trazer sugestões
 app.get('/produto/:id', async (req, res) => {
   try {
@@ -616,6 +524,8 @@ app.post("/pedido/novo", async (req, res) => {
     res.status(500).json({ message: "Erro interno", detalhes: error.message });
   }
 });
+
+// --------------- PEDIDOS --------------------------------
 
 app.get('/debug', (req, res) => {
     res.json({ mensagem: "Servidor vivo na porta 5500!" });

@@ -2,8 +2,11 @@ import loginImage from "../../assets/loginImage.png";
 import logoReBiteH from "../../assets/logoReBiteH.png";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useContext } from "react";
+import { AuthContext } from "/src/context/AuthContext.jsx";
 
 function Login() {
+  const { setUser } = useContext(AuthContext);
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const navigate = useNavigate();
@@ -26,12 +29,17 @@ function Login() {
       if (response.ok) {
         console.log("Sucesso:", data);
 
-        // Guarda as informações de sessão essenciais
         localStorage.setItem("token", data.token);
         localStorage.setItem("cargo", data.cargo);
         localStorage.setItem("usuarioId", data.id);
 
-        // NOVO: Verifica se o Administrador Lojista já possui uma loja associada
+       setUser({ 
+         nome: data.nome,
+         id: data.id,
+         cargo: data.cargo,
+         hasEstablishment: data.cargo === "admin"
+       });
+
         if (data.email === "B@B.com" || data.cargo === "admin") {
           try {
             const resLoja = await fetch("http://localhost:5500/estabelecimento/checar", {

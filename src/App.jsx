@@ -13,14 +13,12 @@ import CadastrarLoja from "./pages/PaginaParaLojistas/CadastrarLoja.jsx";
 import PainelLoja from "./pages/PaginaParaLojistas/PainelLoja.jsx";
 import PaginaCliente from "./pages/Cliente/paginaCliente.jsx";
 
-function App() {
-  const [user, setUser] = useState(null);
 
+function App() {
   return (
     <BrowserRouter>
       <div className="w-full min-h-screen bg-slate-50">
-        <NavBar user={user} />
-
+        <NavBar/>
         <Routes>
           <Route path="/" element={<Inicio />} />
 
