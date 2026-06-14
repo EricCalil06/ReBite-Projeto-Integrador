@@ -23,6 +23,7 @@ function PainelLoja() {
     alertasAlergicos: "",
     descricao: "",
     imagem: "",
+    peso: "",
   });
   const [formFunc, setFormFunc] = useState({ email: "" });
 
@@ -598,6 +599,15 @@ function PainelLoja() {
                   setFormProd({ ...formProd, alertasAlergicos: e.target.value })
                 }
                 className="border p-2 rounded-xl"
+              />
+
+              <input
+                type="number"
+                placeholder="Peso em kg (Ex: 0.5)"
+                value={formProd.peso}
+                onChange={e => setFormProd({ ...formProd, peso: e.target.value })}
+                className="border p-2 rounded-xl"
+                step="0.1"
               />
 
               <select

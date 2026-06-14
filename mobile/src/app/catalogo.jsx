@@ -10,7 +10,7 @@ import { useAuth } from "../context/AuthContext";
 
 const FORM_VAZIO = {
   nome: "", descricao: "", preco: "", quantidade: "",
-  validade: "", alertasAlergicos: "", categoria: "", tipo: "avulso"
+  validade: "", alertasAlergicos: "", categoria: "", tipo: "avulso", peso: ""
 };
 
 export default function Catalogo() {
@@ -70,6 +70,7 @@ export default function Catalogo() {
           preco: Number(form.preco),
           quantidade: Number(form.quantidade),
           validade: new Date(form.validade).toISOString(),
+          peso: Number(form.peso) || 0,
         }),
       });
 
@@ -183,6 +184,7 @@ export default function Catalogo() {
                 { label: "Validade * (AAAA-MM-DD)", key: "validade", placeholder: "Ex: 2026-06-30" },
                 { label: "Alérgicos", key: "alertasAlergicos", placeholder: "Ex: Glúten, Lactose" },
                 { label: "Categoria *", key: "categoria", placeholder: "Ex: Pães, Doces" },
+                { label: "Peso (kg)", key: "peso", placeholder: "Ex: 0.5", keyboard: "numeric" },
               ].map(({ label, key, placeholder, keyboard }) => (
                 <View key={key} style={styles.campoGroup}>
                   <Text style={styles.campoLabel}>{label}</Text>
