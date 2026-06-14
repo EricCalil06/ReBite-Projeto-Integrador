@@ -240,6 +240,19 @@ function PainelLoja() {
     0,
   );
 
+  async function atualizarStatus(pedidoId, novoStatus) {
+  try {
+    const res = await fetch(`http://localhost:5500/pedidos/${pedidoId}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: novoStatus }),
+    });
+    if (res.ok) carregarPedidos(loja._id);
+  } catch (err) {
+    console.error("Erro ao atualizar status:", err);
+  }
+}
+
   return (
     <div className="min-h-screen bg-[#FDFBF9] font-sans flex flex-col w-full overflow-x-hidden">
       <nav className="bg-white border-b border-gray-100 px-4 md:px-12 py-4 flex justify-between items-center relative w-full z-50">
@@ -392,98 +405,113 @@ function PainelLoja() {
       </div>
 
       <div className="flex flex-1 p-10 gap-8">
-        {/* Painel de Pedidos (Aparece quando a aba for "pedidos") */}
         {aba === "pedidos" && (
           <div className="w-full flex flex-col gap-6 mt-6">
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-              {/* Card 1: Pedidos de Hoje */}
               <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-1">
-                <span className="text-gray-500 font-semibold text-sm">
-                  Pedidos de hoje
-                </span>
-                <span className="text-3xl font-bold text-[#F55D22]">
-                  {pedidosDeHoje.length}
-                </span>
+                <span className="text-gray-500 font-semibold text-sm">Pedidos de hoje</span>
+                <span className="text-3xl font-bold text-[#F55D22]">{pedidosDeHoje.length}</span>
               </div>
-
-              {/* Card 2: Pedidos Pendentes */}
               <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-1">
-                <span className="text-gray-500 font-semibold text-sm">
-                  Pedidos pendentes
-                </span>
-                <span className="text-3xl font-bold text-[#F55D22]">
-                  {pedidosPendentes.length}
-                </span>
+                <span className="text-gray-500 font-semibold text-sm">Pedidos pendentes</span>
+                <span className="text-3xl font-bold text-[#F55D22]">{pedidosPendentes.length}</span>
               </div>
-
-              {/* Card 3: Valor Total */}
               <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col gap-1">
-                <span className="text-gray-500 font-semibold text-sm">
-                  Valor total dos pedidos
-                </span>
+                <span className="text-gray-500 font-semibold text-sm">Valor total dos pedidos</span>
                 <span className="text-3xl font-bold text-[#F55D22]">
-                  R${" "}
-                  {valorTotalGeral.toLocaleString("pt-BR", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                  R$ {valorTotalGeral.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
             </div>
 
-            <h2 className="font-bold text-gray-800 text-lg mt-2">
-              Pedidos Recebidos
-            </h2>
-
-            {pedidos.length === 0 ? (
-              <p className="text-gray-400 text-sm italic">
-                Nenhum pedido recebido ainda.
-              </p>
+            {/* PENDENTES */}
+            <h2 className="font-bold text-gray-800 text-lg mt-2">Pedidos Pendentes</h2>
+            {pedidos.filter(p => p.status === "Pendente").length === 0 ? (
+              <p className="text-gray-400 text-sm italic">Nenhum pedido pendente.</p>
             ) : (
-              pedidos.map((pedido) => (
-                <div
-                  key={pedido._id}
-                  className="p-5 bg-white border border-gray-100 rounded-2xl shadow-sm flex justify-between items-center"
-                >
+              pedidos.filter(p => p.status === "Pendente").map(pedido => (
+                <div key={pedido._id} className="p-5 bg-white border border-amber-100 rounded-2xl shadow-sm flex justify-between items-center gap-4">
                   <div>
                     <div className="flex items-center gap-3">
-                      <span className="text-xs font-bold text-gray-400">
-                        ID: #{pedido._id.slice(-6).toUpperCase()}
-                      </span>
-                      <span
-                        className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                          pedido.status === "Pendente"
-                            ? "bg-amber-50 text-amber-600"
-                            : pedido.status === "Pronto"
-                              ? "bg-green-50 text-green-600"
-                              : "bg-gray-50 text-gray-600"
-                        }`}
-                      >
-                        {pedido.status}
-                      </span>
+                      <span className="text-xs font-bold text-gray-400">ID: #{pedido._id.slice(-6).toUpperCase()}</span>
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-600">Pendente</span>
                     </div>
-
                     <div className="text-sm text-gray-700 font-medium mt-2">
-                      {pedido.itens
-                        .map((item) => `${item.quantidade}x ${item.nome}`)
-                        .join(", ")}
+                      {pedido.itens.map(item => `${item.quantidade}x ${item.nome}`).join(", ")}
                     </div>
-
                     <span className="text-xs text-gray-400 block mt-1">
-                      {new Date(pedido.createdAt).toLocaleDateString("pt-BR")}{" "}
-                      às{" "}
-                      {new Date(pedido.createdAt).toLocaleTimeString("pt-BR", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {new Date(pedido.createdAt).toLocaleDateString("pt-BR")} às{" "}
+                      {new Date(pedido.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                     </span>
                   </div>
+                  <div className="text-right flex flex-col gap-2 items-end">
+                    <span className="text-base font-bold text-gray-800">R$ {pedido.total.toFixed(2)}</span>
+                    <button
+                      onClick={() => atualizarStatus(pedido._id, "Preparando")}
+                      className="bg-[#F55D22] text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-[#ff4800] transition-colors"
+                    >
+                      Confirmar Pedido
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
 
-                  <div className="text-right">
-                    <span className="text-base font-bold text-gray-800 block">
-                      R$ {pedido.total.toFixed(2)}
+            {/* EM PREPARO */}
+            <h2 className="font-bold text-gray-800 text-lg mt-2">Em Preparo</h2>
+            {pedidos.filter(p => p.status === "Preparando").length === 0 ? (
+              <p className="text-gray-400 text-sm italic">Nenhum pedido em preparo.</p>
+            ) : (
+              pedidos.filter(p => p.status === "Preparando").map(pedido => (
+                <div key={pedido._id} className="p-5 bg-white border border-blue-100 rounded-2xl shadow-sm flex justify-between items-center gap-4">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-bold text-gray-400">ID: #{pedido._id.slice(-6).toUpperCase()}</span>
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-600">Preparando</span>
+                    </div>
+                    <div className="text-sm text-gray-700 font-medium mt-2">
+                      {pedido.itens.map(item => `${item.quantidade}x ${item.nome}`).join(", ")}
+                    </div>
+                    <span className="text-xs text-gray-400 block mt-1">
+                      {new Date(pedido.createdAt).toLocaleDateString("pt-BR")} às{" "}
+                      {new Date(pedido.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                     </span>
+                  </div>
+                  <div className="text-right flex flex-col gap-2 items-end">
+                    <span className="text-base font-bold text-gray-800">R$ {pedido.total.toFixed(2)}</span>
+                    <button
+                      onClick={() => atualizarStatus(pedido._id, "Pronto")}
+                      className="bg-green-600 text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-green-700 transition-colors"
+                    >
+                      Marcar como Pronto
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+
+            {/* PRONTOS */}
+            <h2 className="font-bold text-gray-800 text-lg mt-2">Prontos para Retirada</h2>
+            {pedidos.filter(p => p.status === "Pronto").length === 0 ? (
+              <p className="text-gray-400 text-sm italic">Nenhum pedido pronto.</p>
+            ) : (
+              pedidos.filter(p => p.status === "Pronto").map(pedido => (
+                <div key={pedido._id} className="p-5 bg-white border border-green-100 rounded-2xl shadow-sm flex justify-between items-center gap-4">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-bold text-gray-400">ID: #{pedido._id.slice(-6).toUpperCase()}</span>
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-50 text-green-600">Pronto</span>
+                    </div>
+                    <div className="text-sm text-gray-700 font-medium mt-2">
+                      {pedido.itens.map(item => `${item.quantidade}x ${item.nome}`).join(", ")}
+                    </div>
+                    <span className="text-xs text-gray-400 block mt-1">
+                      {new Date(pedido.createdAt).toLocaleDateString("pt-BR")} às{" "}
+                      {new Date(pedido.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-base font-bold text-gray-800">R$ {pedido.total.toFixed(2)}</span>
                   </div>
                 </div>
               ))

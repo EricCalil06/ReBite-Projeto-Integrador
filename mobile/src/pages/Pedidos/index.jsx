@@ -56,8 +56,7 @@ export default function Pedidos() {
       ) : (
         <ScrollView contentContainerStyle={styles.lista} showsVerticalScrollIndicator={false}>
           {pedidos.map((pedido) => (
-            <View key={pedido._id} style={styles.card}>
-              
+            <TouchableOpacity key={pedido._id} style={styles.card} onPress={() => router.push(`/pedido/${pedido._id}`)}>
               <View style={styles.cardHeader}>
                 <Text style={styles.cardId}>Pedido #{pedido._id.slice(-6).toUpperCase()}</Text>
                 <View style={[styles.statusBadge, { backgroundColor: statusCor(pedido.status) + "20" }]}>
@@ -88,8 +87,7 @@ export default function Pedidos() {
                 </Text>
                 <Text style={styles.total}>R$ {pedido.total.toFixed(2)}</Text>
               </View>
-
-            </View>
+            </TouchableOpacity>
           ))}
         </ScrollView>
       )}

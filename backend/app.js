@@ -1,4 +1,4 @@
-import 'dotenv/config'; 
+import dotenv from 'dotenv'; 
 import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
@@ -26,6 +26,7 @@ app.use(express.json());
 app.use(cors());
 
 app.use(express.static('public'));
+dotenv.config();
 
 app.listen(PORT, () => {
   console.log(`servidor em: ${PORT}`);
@@ -570,6 +571,21 @@ app.get('/pedidos/estabelecimento', async (req, res) => {
     }
 });
 
+app.get('/pedidos/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ error: "ID inválido." });
+        }
+        const Pedido = mongoose.model('Pedido');
+        const pedido = await Pedido.findById(id);
+        if (!pedido) return res.status(404).json({ error: "Pedido não encontrado." });
+        res.status(200).json(pedido);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.get('/pedidos/usuario/:usuarioId', async (req, res) => {
     try {
         const { usuarioId } = req.params;
@@ -590,6 +606,60 @@ app.get('/pedidos/usuario/:usuarioId', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+app.get('/pedidos/usuario/:usuarioId/kgs', async (req, res) => {
+    try {
+        const { usuarioId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(usuarioId)) {
+            return res.status(400).json({ error: "ID inválido." });
+        }
+
+        const Pedido = mongoose.model('Pedido');
+        const pedidos = await Pedido.find({
+            usuarioId: new mongoose.Types.ObjectId(usuarioId),
+            status: { $in: ['Pronto', 'Entregue'] }
+        }).populate('itens.produtoId', 'peso');
+
+        let totalKg = 0;
+        pedidos.forEach(pedido => {
+            pedido.itens.forEach(item => {
+                const peso = item.produtoId?.peso || 0;
+                totalKg += peso * item.quantidade;
+            });
+        });
+
+        res.status(200).json({ totalKg: totalKg.toFixed(2) });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.patch('/pedidos/:id/status', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+
+        const statusValidos = ['Pendente', 'Preparando', 'Pronto', 'Entregue', 'Cancelado'];
+        if (!statusValidos.includes(status)) {
+            return res.status(400).json({ error: "Status inválido." });
+        }
+
+        const Pedido = mongoose.model('Pedido');
+        const pedido = await Pedido.findByIdAndUpdate(
+            id,
+            { status },
+            { new: true }
+        );
+
+        if (!pedido) return res.status(404).json({ error: "Pedido não encontrado." });
+
+        res.status(200).json(pedido);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+//----------------------------------------------PEDIDOS------------------------------------------------
 // ROTA: Buscar um único produto/sacola por ID e trazer sugestões
 app.get('/produto/:id', async (req, res) => {
   try {

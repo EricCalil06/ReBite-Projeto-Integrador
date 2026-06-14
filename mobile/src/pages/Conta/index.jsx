@@ -15,10 +15,23 @@ export default function Conta() {
   const [openFaq, setOpenFaq] = useState(null);
   const [temLoja, setTemLoja] = useState(null);
   const { user, logout } = useAuth();
+  const [kgSalvos, setKgSalvos] = useState("0");
 
   useEffect(() => {
     if (user?.cargo === "admin") checarLoja();
   }, [user]);
+
+  async function buscarKgs() {
+    try {
+      const res = await fetch(`http://10.0.2.2:5500/pedidos/usuario/${user.id}/kgs`);
+      if (res.ok) {
+        const dados = await res.json();
+        setKgSalvos(dados.totalKg);
+      }
+    } catch (err) {
+      console.error("Erro ao buscar kgs:", err);
+    }
+  }
 
   async function checarLoja() {
     try {
@@ -34,6 +47,10 @@ export default function Conta() {
       setTemLoja(false);
     }
   }
+
+  useEffect(() => {
+    if (user?.id) buscarKgs();
+  }, [user]);
 
   const toggleFaq = (index) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -82,7 +99,7 @@ export default function Conta() {
           <Text style={styles.welcome}>Bem-vindo!</Text>
           <Text style={styles.username}>{user?.nome || "Usuário"}</Text>
           <Text style={styles.congrats}>Parabéns! Você economizou até agora:</Text>
-          <Text style={styles.kg}>22kg de Alimento</Text>
+          <Text style={styles.kg}>{kgSalvos}kg de Alimento</Text>
         </View>
         <Image
           source={{ uri: "https://i.pravatar.cc/100" }}
