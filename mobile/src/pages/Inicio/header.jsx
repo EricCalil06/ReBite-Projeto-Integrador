@@ -1,4 +1,6 @@
-import { View, Text, Image, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
 export default function Header() {
   const hora = new Date().getHours();
@@ -10,10 +12,19 @@ export default function Header() {
         <Text style={styles.saudacao}>{saudacao},</Text>
         <Text style={styles.nome}>Usuário</Text>
       </View>
-      <Image
-        source={{ uri: "https://i.pravatar.cc/100" }}
-        style={styles.avatar}
-      />
+      
+      <View style={styles.rightContainer}>
+        <TouchableOpacity 
+          style={styles.iconButton}
+          onPress={() => router.push("/caixa-entrada")} 
+        >
+          <Ionicons name="notifications-outline" size={24} color="#111" />
+        </TouchableOpacity>
+        
+        <TouchableOpacity onPress={() => router.push("/conta")}>
+          <Ionicons name="person-circle-outline" size={46} color="#ccc" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -22,5 +33,6 @@ const styles = StyleSheet.create({
   container: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 20, paddingTop: 60, paddingBottom: 16 },
   saudacao: { fontSize: 14, color: "#666" },
   nome: { fontSize: 22, fontWeight: "bold", color: "#111" },
-  avatar: { width: 44, height: 44, borderRadius: 22 },
+  rightContainer: { flexDirection: "row", alignItems: "center" },
+  iconButton: { marginRight: 16 },
 });

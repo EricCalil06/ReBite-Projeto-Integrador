@@ -7,10 +7,14 @@ import {
   Image,
   StyleSheet,
   ScrollView,
+  LogBox,
 } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { useAuth } from "../../context/AuthContext";
 import { router } from "expo-router";
+import { Notification } from "../../components/customNotification.jsx";
+
+LogBox.ignoreLogs(["DateTimePicker: `onChange` is deprecated"]);
 
 const logo = require("../../../assets/images/logoReBiteH.png");
 

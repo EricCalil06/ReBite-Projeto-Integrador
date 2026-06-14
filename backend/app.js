@@ -14,12 +14,11 @@ import Funcionario from './models/funcionario.js';
 import Produto from './models/produto.js';
 import Denuncia from './models/denuncia.js';
 import Pedido from './models/Pedido.js';
+import Convite from './models/Convite.js';
 
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-
 
 const PORT = process.env.PORT || 5500;
 const app = express();
@@ -170,8 +169,7 @@ app.delete('/funcionarios/:id', async (req, res) => {
     res.json({ message: "Funcionário removido" });
 });
 
-// Cadastrar funcionário: altera cargo de cliente existente para "funcionario"
-// SUBSTITUIR a rota POST /funcionarios/cadastrar
+// Cadastrar funcionário
 app.post('/funcionarios/cadastrar', async (req, res) => {
     try {
         const donoId = req.headers['x-usuario-id'];
@@ -179,7 +177,7 @@ app.post('/funcionarios/cadastrar', async (req, res) => {
 
         const dono = await Usuario.findById(donoId);
         if (!dono || dono.cargo !== 'admin') {
-            return res.status(403).json({ error: "Apenas administradores podem cadastrar funcionários." });
+            return res.status(403).json({ error: "Apenas administradores podem convidar funcionários." });
         }
 
         // Busca a loja do admin
@@ -192,23 +190,37 @@ app.post('/funcionarios/cadastrar', async (req, res) => {
         if (!email) return res.status(400).json({ error: "Email do funcionário é obrigatório." });
 
         const usuario = await Usuario.findOne({ email });
-        if (!usuario) return res.status(404).json({ error: "Usuário com este email não encontrado." });
+        if (!usuario) return res.status(404).json({ error: "Usuário com este email não encontrado no aplicativo." });
 
         if (usuario.cargo === 'admin') {
-            return res.status(400).json({ error: "Não é possível alterar o cargo de um administrador." });
+            return res.status(400).json({ error: "Não é possível convidar um administrador." });
         }
 
-        if (usuario.cargo === 'funcionario') {
-            return res.status(400).json({ error: "Este usuário já é funcionário." });
+        if (usuario.cargo === 'funcionario' && String(usuario.estabelecimentoId) === String(loja._id)) {
+            return res.status(400).json({ error: "Este usuário já é funcionário da sua loja." });
         }
 
-        usuario.cargo = 'funcionario';
-        usuario.estabelecimentoId = loja._id;
-        await usuario.save();
+        // Verifica se já existe um convite pendente para essa pessoa nessa loja
+        const conviteExistente = await Convite.findOne({ 
+            emailColaborador: email, 
+            estabelecimentoId: loja._id, 
+            status: 'pendente' 
+        });
 
-        res.status(200).json({ message: `${usuario.nome} agora é funcionário da ${loja.nome}!`, usuario });
+        if (conviteExistente) {
+            return res.status(400).json({ error: "Já existe um convite pendente para este e-mail." });
+        }
+
+        const novoConvite = new Convite({
+            emailColaborador: email,
+            estabelecimentoId: loja._id,
+            nomeLoja: loja.nome
+        });
+        await novoConvite.save();
+
+        res.status(200).json({ message: `Convite enviado com sucesso para ${usuario.nome}!` });
     } catch (error) {
-        console.error("Erro ao cadastrar funcionário:", error);
+        console.error("Erro ao enviar convite:", error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -657,3 +669,96 @@ if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => console.log(`server up & running, conexão ok`))
 }
 
+app.get('/convites/meus-convites', async (req, res) => {
+    try {
+        const usuarioId = req.headers['x-usuario-id'];
+        if (!usuarioId) return res.status(401).json({ error: "Usuário não identificado." });
+        const usuario = await Usuario.findById(usuarioId);
+        if (!usuario) return res.status(404).json({ error: "Usuário não encontrado." });
+
+        const convites = await Convite.find({ emailColaborador: usuario.email, status: 'pendente' });
+        res.status(200).json(convites);
+    } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+app.post('/convites/:id/responder', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { resposta } = req.body;
+        const usuarioId = req.headers['x-usuario-id'];
+
+        if (!['aceito', 'recusado'].includes(resposta)) return res.status(400).json({ error: "Resposta inválida." });
+
+        const convite = await Convite.findById(id);
+        if (!convite || convite.status !== 'pendente') return res.status(404).json({ error: "Convite não encontrado ou já respondido." });
+
+        const usuario = await Usuario.findById(usuarioId);
+        if (usuario.email !== convite.emailColaborador) return res.status(403).json({ error: "Acesso negado." });
+
+        convite.status = resposta;
+        await convite.save();
+
+        if (resposta === 'aceito') {
+            usuario.cargo = 'funcionario';
+            usuario.estabelecimentoId = convite.estabelecimentoId;
+            await usuario.save();
+        }
+        res.status(200).json({ message: `Convite ${resposta} com sucesso.` });
+    } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+app.get('/convites/da-loja', async (req, res) => {
+    try {
+        const donoId = req.headers['x-usuario-id'];
+        const loja = await Estabelecimento.findOne({ donoId });
+        if (!loja) return res.status(404).json({ error: "Loja não encontrada." });
+
+        const convites = await Convite.find({ estabelecimentoId: loja._id, status: 'pendente' });
+        res.status(200).json(convites);
+    } catch (error) { res.status(500).json({ error: error.message }); }
+});
+
+app.post('/convites/enviar', async (req, res) => {
+    try {
+        const donoId = req.headers['x-usuario-id'];
+        const { emailColaborador } = req.body;
+
+        if (!emailColaborador) return res.status(400).json({ error: "E-mail do colaborador é obrigatório." });
+
+        const loja = await Estabelecimento.findOne({ donoId });
+        if (!loja) return res.status(404).json({ error: "Loja não encontrada." });
+
+        const usuario = await Usuario.findOne({ email: emailColaborador });
+        if (!usuario) return res.status(404).json({ error: "Usuário com este e-mail não encontrado no aplicativo." });
+
+        if (usuario.cargo === 'admin') {
+            return res.status(400).json({ error: "Não é possível convidar um administrador." });
+        }
+
+        if (usuario.estabelecimentoId) {
+            if (String(usuario.estabelecimentoId) === String(loja._id)) {
+                return res.status(400).json({ error: "Este usuário já é funcionário da sua loja." });
+            } else {
+                return res.status(400).json({ error: "Este usuário já trabalha em outro estabelecimento." });
+            }
+        }
+
+        const conviteExistente = await Convite.findOne({ emailColaborador, status: 'pendente' });
+        if (conviteExistente) return res.status(400).json({ error: "Já existe um convite pendente para este e-mail." });
+
+        const novoConvite = new Convite({ emailColaborador, estabelecimentoId: loja._id, nomeLoja: loja.nome });
+        await novoConvite.save();
+
+        res.status(201).json({ message: "Convite enviado com sucesso!" });
+        
+        } catch (error) { 
+            res.status(500).json({ error: error.message }); 
+        }
+    });
+
+app.delete('/convites/:id', async (req, res) => {
+    try {
+        await Convite.findByIdAndDelete(req.params.id);
+        res.status(200).json({ message: "Convite cancelado." });
+    } catch (error) { res.status(500).json({ error: error.message }); }
+});

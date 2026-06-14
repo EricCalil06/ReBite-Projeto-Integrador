@@ -16,11 +16,15 @@ export default function NavbarMobile() {
             index: "home",
             lojas: "grid",
             pedidos: "shopping-bag",
+            "caixa-entrada": "inbox",
             conta: "user",
           };
+
+          const iconName = icons[route.name] || "circle";
+
           return (
             <View style={styles.iconWrapper}>
-              <Feather name={icons[route.name]} size={24} color={color} />
+              <Feather name={iconName} size={24} color={color} />
               {focused && <View style={styles.activeBar} />}
             </View>
           );
@@ -30,7 +34,9 @@ export default function NavbarMobile() {
       <Tabs.Screen name="index" options={{ title: "Início" }} />
       <Tabs.Screen name="lojas" options={{ title: "Lojas" }} />
       <Tabs.Screen name="pedidos" options={{ title: "Pedidos" }} />
+      <Tabs.Screen name="caixa-entrada" options={{ title: "Recados" }} />
       <Tabs.Screen name="conta" options={{ title: "Conta" }} />
+
       <Tabs.Screen name="cadastro" options={{ href: null }} />
       <Tabs.Screen name="carrinho" options={{ href: null }} />
       <Tabs.Screen name="loja/[id]" options={{ href: null }} />

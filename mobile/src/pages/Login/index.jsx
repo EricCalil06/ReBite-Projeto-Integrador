@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 import { router } from "expo-router";
+import { Notification } from "../../components/customNotification.jsx";
 
 const logo = require("../../../assets/images/logoReBiteH.png");
 
@@ -22,7 +23,12 @@ export default function Login() {
 
   const handleLogin = async () => {
     if (!email || !senha) {
-      Alert.alert("Atenção", "Preencha e-mail e senha.");
+      Notification.show({
+        type: 'error',
+        text1: 'Atenção',
+        text2: 'Preencha e-mail e senha para continuar.',
+        position: 'top'
+      });
       return;
     }
 
@@ -37,12 +43,30 @@ export default function Login() {
 
       if (response.ok) {
         login({ id: data.id, nome: data.nome, cargo: data.cargo, token: data.token });
+
+        Notification.show({
+          type: 'success',
+          text1: 'Bem-vindo(a)!',
+          text2: 'Login realizado com sucesso.',
+          position: 'top'
+        });
+
         router.replace("/");
       } else {
-        Alert.alert("Erro", data.mensagem || "Credenciais inválidas.");
+        Notification.show({
+          type: 'error',
+          text1: 'Erro',
+          text2: data.mensagem || "Credenciais inválidas.",
+          position: 'top'
+        });
       }
     } catch (err) {
-      Alert.alert("Erro de conexão", "Verifique se o servidor está ligado.");
+      Notification.show({
+        type: 'error',
+        text1: 'Erro de conexão',
+        text2: 'Verifique se o servidor está ligado.',
+        position: 'top'
+      });
     }
   };
 

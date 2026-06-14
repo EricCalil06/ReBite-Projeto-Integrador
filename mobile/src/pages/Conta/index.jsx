@@ -11,13 +11,12 @@ import { Feather } from "@expo/vector-icons";
 import { useAuth } from "../../context/AuthContext";
 import { router } from "expo-router";
 
-
 export default function Conta() {
   const [openFaq, setOpenFaq] = useState(null);
   const [temLoja, setTemLoja] = useState(null);
   const { user, logout } = useAuth();
 
-    useEffect(() => {
+  useEffect(() => {
     if (user?.cargo === "admin") checarLoja();
   }, [user]);
 
@@ -39,7 +38,6 @@ export default function Conta() {
   const toggleFaq = (index) => {
     setOpenFaq(openFaq === index ? null : index);
   };
-  
 
   const faqData = [
     { question: "Minha entrega não veio certo, o que eu posso fazer?" },
@@ -48,9 +46,37 @@ export default function Conta() {
     { question: "Perdi a senha da minha conta. O que eu posso fazer?" },
     { question: "Para que serve o código de segurança nas entregas?" },
   ];
+
+  if (!user) {
+    return (
+      <View style={styles.screenUnauth}>
+        <View style={styles.unauthContent}>
+          <Feather name="user-x" size={64} color="#ccc" style={styles.unauthIcon} />
+          <Text style={styles.unauthTitle}>Você não está logado</Text>
+          <Text style={styles.unauthText}>
+            Para acessar seus dados, acompanhar seus pedidos e aproveitar as ofertas, faça login na sua conta.
+          </Text>
+          
+          <TouchableOpacity 
+            style={styles.loginButton} 
+            onPress={() => router.push("/login")} 
+          >
+            <Text style={styles.loginButtonText}>Fazer Login</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.registerButton} 
+            onPress={() => router.push("/cadastro")}
+          >
+            <Text style={styles.registerButtonText}>Ainda não tenho conta</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-
       <View style={styles.profileCard}>
         <View style={styles.profileInfo}>
           <Text style={styles.welcome}>Bem-vindo!</Text>
@@ -123,15 +149,13 @@ export default function Conta() {
         <Text style={styles.supportLink}>Clique aqui</Text>
         {" "}e fale com{"\n"}nosso suporte
       </Text>
-
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: "#fff" },
-  content: { padding: 20, paddingBottom: 40 },
-
+  content: { padding: 20, paddingBottom: 40, paddingTop: 60 }, 
   profileCard: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: "#F9F9F9", borderRadius: 16, padding: 16, marginBottom: 16 },
   profileInfo: { flex: 1, marginRight: 12 },
   welcome: { fontSize: 13, color: "#555" },
@@ -139,25 +163,29 @@ const styles = StyleSheet.create({
   congrats: { fontSize: 13, color: "#555", marginTop: 4 },
   kg: { fontSize: 18, fontWeight: "bold", color: "#F05A28", marginTop: 2 },
   avatar: { width: 72, height: 72, borderRadius: 36 },
-
   ctaButton: { backgroundColor: "#F05A28", borderRadius: 12, paddingVertical: 16, alignItems: "center", marginBottom: 28 },
   ctaButtonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-
   sectionTitle: { fontSize: 18, fontWeight: "bold", color: "#111", marginBottom: 4 },
   sectionSubtitle: { fontSize: 14, color: "#666", marginBottom: 12 },
-
   configList: { borderWidth: 1, borderColor: "#E5E7EB", borderRadius: 12, marginBottom: 28, overflow: "hidden" },
   configItem: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16 },
   configText: { fontSize: 15, color: "#111" },
   divider: { height: 1, backgroundColor: "#E5E7EB" },
-
   faqList: { gap: 0, borderWidth: 1, borderColor: "#E5E7EB", borderRadius: 12, overflow: "hidden", marginBottom: 20 },
   faqItem: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 16, borderBottomWidth: 1, borderBottomColor: "#E5E7EB" },
   faqQuestion: { fontSize: 14, color: "#111", flex: 1, marginRight: 8 },
-
   support: { fontSize: 13, color: "#555", textAlign: "center", lineHeight: 20 },
   supportLink: { color: "#F05A28", fontWeight: "600" },
-
   logoutButton: { borderWidth: 1, borderColor: "#E5E7EB", borderRadius: 999, paddingVertical: 14, alignItems: "center", marginTop: 8, marginBottom: 20 },
   logoutText: { color: "#EF4444", fontWeight: "bold", fontSize: 15 },
+
+  screenUnauth: { flex: 1, backgroundColor: "#fff", justifyContent: "center", alignItems: "center" },
+  unauthContent: { padding: 30, alignItems: "center", width: "100%" },
+  unauthIcon: { marginBottom: 20 },
+  unauthTitle: { fontSize: 24, fontWeight: "bold", color: "#111", marginBottom: 12, textAlign: "center" },
+  unauthText: { fontSize: 15, color: "#666", textAlign: "center", marginBottom: 40, lineHeight: 22 },
+  loginButton: { backgroundColor: "#F05A28", paddingVertical: 16, borderRadius: 999, width: "100%", alignItems: "center", marginBottom: 16 },
+  loginButtonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+  registerButton: { backgroundColor: "#F3F4F6", paddingVertical: 16, borderRadius: 999, width: "100%", alignItems: "center" },
+  registerButtonText: { color: "#111", fontWeight: "bold", fontSize: 16 },
 });
