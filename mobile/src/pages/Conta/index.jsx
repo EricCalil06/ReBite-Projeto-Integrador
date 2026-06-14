@@ -42,9 +42,11 @@ export default function Conta() {
         />
       </View>
 
-      <TouchableOpacity style={styles.ctaButton}>
-        <Text style={styles.ctaButtonText}>Acessar painel da loja</Text>
-      </TouchableOpacity>
+      {user?.cargo === "admin" && (
+        <TouchableOpacity style={styles.ctaButton} onPress={() => router.push("/painel-loja")}>
+          <Text style={styles.ctaButtonText}>Acessar painel da loja</Text>
+        </TouchableOpacity>
+      )}
 
       <Text style={styles.sectionTitle}>Configurações</Text>
 
@@ -84,7 +86,7 @@ export default function Conta() {
       </View>
       <TouchableOpacity
         style={styles.logoutButton}
-        onPress={() => { logout(); router.replace("/login"); }}
+        onPress={() => { logout(); router.replace("/"); }}
       >
         <Text style={styles.logoutText}>Sair da conta</Text>
       </TouchableOpacity>

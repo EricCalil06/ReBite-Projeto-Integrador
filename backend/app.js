@@ -60,9 +60,11 @@ function obterModelEstabelecimento() {
 
 async function obterEstabelecimento(req, res, next) {
     const donoId = req.headers['x-usuario-id'];
+    console.log("middleware - donoId recebido:", donoId);
     if (!donoId) return res.status(401).json({ error: "Usuário não identificado." });
     
     let est = await Estabelecimento.findOne({ donoId });
+    console.log("middleware - estabelecimento encontrado:", est?._id);
     if (!est) {
         // Cria um provisório se o Admin não tiver para não quebrar o fluxo
         est = new Estabelecimento({ nome: "Meu Estabelecimento Provisório", donoId });
@@ -254,17 +256,10 @@ app.delete('/funcionarios/da-loja/:id', async (req, res) => {
 });
 
 // --- CRUD PRODUTOS (Avulsos e Sacolas Surpresa) ---
-app.get('/produtos', async (req, res) => {
+app.get('/produtos', obterEstabelecimento, async (req, res) => {
     try {
-        const estId = req.headers['x-estabelecimento-id']; 
-        
-        let filtro = {};
-        if (estId) {
-            filtro = { estabelecimentoId: estId };
-        }
-
-        const produtos = await mongoose.model('Produto').find(filtro);
-        res.status(200).json(produtos);
+        const lista = await Produto.find({ estabelecimentoId: req.estabelecimentoId });
+        res.json(lista);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -276,11 +271,6 @@ app.post('/produtos', obterEstabelecimento, async (req, res) => {
         await novo.save();
         res.status(201).json(novo);
     } catch (e) { res.status(400).json({ error: e.message }); }
-});
-
-app.get('/produtos', obterEstabelecimento, async (req, res) => {
-    const lista = await Produto.find({ estabelecimentoId: req.estabelecimentoId });
-    res.json(lista);
 });
 
 app.put('/produtos/:id', async (req, res) => {
@@ -338,11 +328,12 @@ app.get('/denuncias', async (req, res) => {
     const lista = await Denuncia.find().populate('estabelecimentoId');
     res.json(lista);
 });
+//-------------------------------------------------------------------------------------------------------
 
 app.post('/estabelecimento', async (req, res) => {
     try {
         const donoId = req.headers['x-usuario-id'];
-        const { nome } = req.body;
+        const { nome, descricao, endereco } = req.body;
 
         if (!donoId) {
             return res.status(401).json({ error: "Usuário não identificado nos cabeçalhos." });
@@ -352,7 +343,7 @@ app.post('/estabelecimento', async (req, res) => {
 
         const perfilLoja = await Estabelecimento.findOneAndUpdate(
             { donoId },
-            { nome },
+            { nome, descricao, endereco },
             { new: true, upsert: true }
         );
 
@@ -571,8 +562,6 @@ app.get('/pedidos/usuario/:usuarioId', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-//------------------------------- PEDIDOS --------------------------------------------
-
 // ROTA: Buscar um único produto/sacola por ID e trazer sugestões
 app.get('/produto/:id', async (req, res) => {
   try {
@@ -601,6 +590,7 @@ app.get('/produto/:id', async (req, res) => {
     res.status(500).json({ message: "Erro interno no servidor." });
   }
 });
+//------------------------------- PEDIDOS --------------------------------------------
 
 app.post("/pedido/novo", async (req, res) => {
   try {

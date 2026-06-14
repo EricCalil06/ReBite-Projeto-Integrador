@@ -35,6 +35,8 @@ export default function NavbarMobile() {
       <Tabs.Screen name="carrinho" options={{ href: null }} />
       <Tabs.Screen name="loja/[id]" options={{ href: null }} />
       <Tabs.Screen name="produto/[id]" options={{ href: null }} />
+      <Tabs.Screen name="painel-loja" options={{ href: null }} />
+      <Tabs.Screen name="catalogo" options={{ href: null }} />
     </Tabs>
   );
 }
