@@ -126,11 +126,12 @@ app.post('/login', async (req, res) => {
     { expiresIn: "7d" }
   );
 
-  res.status(200).json({
+res.status(200).json({
     token: token,
     cargo: usuarioExiste.cargo,
     id: usuarioExiste._id,
-    nome: usuarioExiste.nome // Adicione esta linha
+    nome: usuarioExiste.nome,
+    estabelecimentoId: usuarioExiste.estabelecimentoId || null
   });
 });
 
@@ -256,9 +257,24 @@ app.delete('/funcionarios/da-loja/:id', async (req, res) => {
 });
 
 // --- CRUD PRODUTOS (Avulsos e Sacolas Surpresa) ---
-app.get('/produtos', obterEstabelecimento, async (req, res) => {
+app.get('/produtos', async (req, res) => {
     try {
-        const lista = await Produto.find({ estabelecimentoId: req.estabelecimentoId });
+        const estId = req.headers['x-estabelecimento-id'];
+        const donoId = req.headers['x-usuario-id'];
+
+        let estabelecimentoId;
+
+        if (estId) {
+            estabelecimentoId = estId;
+        } else if (donoId) {
+            const est = await Estabelecimento.findOne({ donoId });
+            if (!est) return res.status(404).json({ error: "Loja não encontrada." });
+            estabelecimentoId = est._id;
+        } else {
+            return res.status(401).json({ error: "Identificação não fornecida." });
+        }
+
+        const lista = await Produto.find({ estabelecimentoId });
         res.json(lista);
     } catch (error) {
         res.status(500).json({ error: error.message });

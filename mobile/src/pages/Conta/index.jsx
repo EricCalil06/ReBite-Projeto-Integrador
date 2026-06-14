@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,13 +11,35 @@ import { Feather } from "@expo/vector-icons";
 import { useAuth } from "../../context/AuthContext";
 import { router } from "expo-router";
 
+
 export default function Conta() {
   const [openFaq, setOpenFaq] = useState(null);
-  const { user, logout } = useAuth();  // adicionar isso
+  const [temLoja, setTemLoja] = useState(null);
+  const { user, logout } = useAuth();
+
+    useEffect(() => {
+    if (user?.cargo === "admin") checarLoja();
+  }, [user]);
+
+  async function checarLoja() {
+    try {
+      const res = await fetch("http://10.0.2.2:5500/estabelecimento/checar", {
+        headers: { "x-usuario-id": user?.id }
+      });
+      if (res.ok) {
+        const dados = await res.json();
+        setTemLoja(dados.existe);
+      }
+    } catch (err) {
+      console.error("Erro ao checar loja:", err);
+      setTemLoja(false);
+    }
+  }
 
   const toggleFaq = (index) => {
     setOpenFaq(openFaq === index ? null : index);
   };
+  
 
   const faqData = [
     { question: "Minha entrega não veio certo, o que eu posso fazer?" },
@@ -42,9 +64,14 @@ export default function Conta() {
         />
       </View>
 
-      {user?.cargo === "admin" && (
-        <TouchableOpacity style={styles.ctaButton} onPress={() => router.push("/painel-loja")}>
-          <Text style={styles.ctaButtonText}>Acessar painel da loja</Text>
+      {user?.cargo === "admin" && temLoja !== null && (
+        <TouchableOpacity
+          style={styles.ctaButton}
+          onPress={() => router.push(temLoja ? "/painel-loja" : "/cadastrar-loja-mobile")}
+        >
+          <Text style={styles.ctaButtonText}>
+            {temLoja ? "Acessar painel da loja" : "Cadastrar loja"}
+          </Text>
         </TouchableOpacity>
       )}
 
