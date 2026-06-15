@@ -92,6 +92,27 @@ export default function Conta() {
     );
   }
 
+  let botaoTexto = "";
+  let botaoRota = "";
+  let mostrarBotao = false;
+
+  if (user?.cargo === "funcionario") {
+    mostrarBotao = true;
+    botaoTexto = "Acessar painel da loja";
+    botaoRota = "/painel-loja";
+  } 
+  else if (user?.cargo === "cliente") {
+    mostrarBotao = true;
+    botaoTexto = "Cadastrar uma loja";
+    botaoRota = "/cadastrar-loja-mobile";
+  } 
+
+  else if (user?.cargo === "admin" && temLoja !== null) {
+    mostrarBotao = true;
+    botaoTexto = temLoja ? "Acessar painel da loja" : "Cadastrar uma loja";
+    botaoRota = temLoja ? "/painel-loja" : "/cadastrar-loja-mobile";
+  }
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.profileCard}>
@@ -107,14 +128,12 @@ export default function Conta() {
         />
       </View>
 
-      {user?.cargo === "admin" && temLoja !== null && (
+      {mostrarBotao && (
         <TouchableOpacity
           style={styles.ctaButton}
-          onPress={() => router.push(temLoja ? "/painel-loja" : "/cadastrar-loja-mobile")}
+          onPress={() => router.push(botaoRota)}
         >
-          <Text style={styles.ctaButtonText}>
-            {temLoja ? "Acessar painel da loja" : "Cadastrar loja"}
-          </Text>
+          <Text style={styles.ctaButtonText}>{botaoTexto}</Text>
         </TouchableOpacity>
       )}
 
@@ -154,6 +173,7 @@ export default function Conta() {
           </TouchableOpacity>
         ))}
       </View>
+      
       <TouchableOpacity
         style={styles.logoutButton}
         onPress={() => { logout(); router.replace("/"); }}
@@ -195,7 +215,6 @@ const styles = StyleSheet.create({
   supportLink: { color: "#F05A28", fontWeight: "600" },
   logoutButton: { borderWidth: 1, borderColor: "#E5E7EB", borderRadius: 999, paddingVertical: 14, alignItems: "center", marginTop: 8, marginBottom: 20 },
   logoutText: { color: "#EF4444", fontWeight: "bold", fontSize: 15 },
-
   screenUnauth: { flex: 1, backgroundColor: "#fff", justifyContent: "center", alignItems: "center" },
   unauthContent: { padding: 30, alignItems: "center", width: "100%" },
   unauthIcon: { marginBottom: 20 },

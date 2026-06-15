@@ -11,6 +11,7 @@ const ProdutoSchema = new mongoose.Schema({
     categoria: { type: String, required: true },
     tipo: { type: String, enum: ['avulso', 'sacola_surpresa'], default: 'avulso' },
     estabelecimentoId: { type: mongoose.Schema.Types.ObjectId, ref: 'Estabelecimento', required: true },
+    imagem: { type: String }
 });
 
 export default mongoose.model('Produto', ProdutoSchema);

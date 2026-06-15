@@ -38,11 +38,8 @@ export default function LojaScreen() {
   useEffect(() => {
     async function buscarDadosDaLoja() {
       try {
-        // Se você não tiver um ID dinâmico ainda por estar testando direto na rota, 
-        // use um ID estático de teste do seu banco: const lojaId = id || "SEU_ID_DO_MONGO_AQUI";
         const lojaId = id; 
         
-        // Chamada para o seu backend usando o IP do emulador do Android Studio (10.0.2.2)
         const response = await fetch(`http://10.0.2.2:5500/estabelecimento/${lojaId}`);
         
         if (response.ok) {

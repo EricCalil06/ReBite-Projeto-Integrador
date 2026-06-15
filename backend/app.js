@@ -249,21 +249,21 @@ app.get('/funcionarios/da-loja', async (req, res) => {
 app.delete('/funcionarios/da-loja/:id', async (req, res) => {
     try {
         const donoId = req.headers['x-usuario-id'];
-        if (!donoId) return res.status(401).json({ error: "Usuário não identificado." });
-
-        const dono = await Usuario.findById(donoId);
-        if (!dono || dono.cargo !== 'admin') {
-            return res.status(403).json({ error: "Apenas administradores podem remover funcionários." });
-        }
+        const loja = await Estabelecimento.findOne({ donoId });
+        
+        if (!loja) return res.status(403).json({ error: "Acesso negado." });
 
         const usuario = await Usuario.findById(req.params.id);
-        if (!usuario) return res.status(404).json({ error: "Funcionário não encontrado." });
+        
+        if (!usuario || String(usuario.estabelecimentoId) !== String(loja._id)) {
+            return res.status(404).json({ error: "Funcionário não encontrado nesta loja." });
+        }
 
         usuario.cargo = 'cliente';
         usuario.estabelecimentoId = null;
         await usuario.save();
 
-        res.status(200).json({ message: `${usuario.nome} foi removido da equipe.` });
+        res.status(200).json({ message: "Funcionário removido com sucesso e revertido para cliente." });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
