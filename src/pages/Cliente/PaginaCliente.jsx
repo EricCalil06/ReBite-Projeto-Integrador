@@ -137,15 +137,14 @@ async function carregarDadosLoja() {
 
       if (response.ok) {
         const pedidoCriado = await response.json();
-        //alert(`Pedido realizado com sucesso! ID: #${pedidoCriado._id.slice(-6).toUpperCase()}`);
+        alert(`Pedido realizado com sucesso! ID: #${pedidoCriado._id.slice(-6).toUpperCase()}`);
         setCarrinho([]);
       } else {
         const erro = await response.json();
-        //alert(`Erro ao finalizar pedido: ${erro.error || "Tente novamente."}`);
+        alert(`Erro ao finalizar pedido: ${erro.error || "Tente novamente."}`);
       }
     } catch (err) {
       console.error("Erro na requisição do pedido:", err);
-      //alert("Erro de conexão com o servidor.");
     }
   }
 
@@ -169,9 +168,7 @@ async function carregarDadosLoja() {
         setModalAberto(false);
         setMotivoDenuncia("");
         setDescricaoDenuncia("");
-        //alert("Denúncia enviada com sucesso!");
       } else {
-        //alert("Erro ao enviar denúncia.");
       }
     } catch (err) {
       console.error("Erro ao processar denúncia:", err);

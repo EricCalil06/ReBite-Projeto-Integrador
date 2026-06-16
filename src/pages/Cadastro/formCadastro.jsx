@@ -14,6 +14,7 @@ function FormCadastro({ step, goToNextStep }) {
     email: "",
     senha: "", 
     telefone: "",
+    cpfCnpj: ""
   });
 
   const handleChange = (e) => {
@@ -23,6 +24,13 @@ function FormCadastro({ step, goToNextStep }) {
       setFormData((prev) => ({
         ...prev,
         [name]: value.replace(/\D/g, ""),
+      }));
+      return;
+    }
+    if (name === "cpfCnpj") {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value.replace(/\D/g, "").slice(0, 14),
       }));
       return;
     }
@@ -36,6 +44,22 @@ function FormCadastro({ step, goToNextStep }) {
   const handleFinalize = async () => {
     if (!aceitouTermos) {
       alert("Por favor, aceite os Termos de Uso para finalizar o cadastro.");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      alert("Digite um e-mail válido.");
+      return;
+    }
+
+    if (formData.telefone.length < 10 || formData.telefone.length > 11) {
+      alert("Telefone deve ter 10 ou 11 dígitos (com DDD).");
+      return;
+    }
+
+    if (formData.cpfCnpj.length !== 11 && formData.cpfCnpj.length !== 14) {
+      alert("CPF deve ter 11 dígitos ou CNPJ 14 dígitos.");
       return;
     }
 
@@ -154,6 +178,20 @@ function FormCadastro({ step, goToNextStep }) {
                     className="w-full px-5 py-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F55D22]"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    CPF ou CNPJ
+                  </label>
+                  <input
+                    type="text"
+                    name="cpfCnpj"
+                    value={formData.cpfCnpj}
+                    onChange={handleChange}
+                    placeholder="Apenas números"
+                    maxLength={14}
+                    className="w-full px-5 py-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F55D22]"
+                  />
+                </div>
               </>
             )}
 
@@ -182,6 +220,10 @@ function FormCadastro({ step, goToNextStep }) {
                     <strong>Telefone:</strong> {formData.telefone}
                   </p>
                 </div>
+
+                <p className="text-sm text-gray-600">
+                  <strong>CPF/CNPJ:</strong> {formData.cpfCnpj}
+                </p>
 
                 <div className="flex items-center gap-2 px-2 mt-2">
                   <input

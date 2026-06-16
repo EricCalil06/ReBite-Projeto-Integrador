@@ -76,10 +76,25 @@ async function obterEstabelecimento(req, res, next) {
 // CRUD DE USUÁRIOS! ---------------------------------------------------------------------
 app.post("/cadastro", async (req, res) => {
   try {
-    const { nome, email, senha, telefone, dataNascimento } = req.body;
+    const { nome, email, senha, telefone, dataNascimento, cpfCnpj } = req.body;
 
-    if (!nome || !email || !senha || !telefone) {
+    if (!nome || !email || !senha || !telefone || !cpfCnpj) {
       return res.status(400).json({ error: "Todos os campos obrigatórios devem ser preenchidos." });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: "E-mail inválido." });
+    }
+
+    const telefoneLimpo = telefone.replace(/\D/g, "");
+    if (telefoneLimpo.length < 10 || telefoneLimpo.length > 11) {
+      return res.status(400).json({ error: "Telefone deve ter 10 ou 11 dígitos (com DDD)." });
+    }
+
+    const cpfCnpjLimpo = cpfCnpj.replace(/\D/g, "");
+    if (cpfCnpjLimpo.length !== 11 && cpfCnpjLimpo.length !== 14) {
+      return res.status(400).json({ error: "CPF deve ter 11 dígitos ou CNPJ 14 dígitos." });
     }
 
     const usuarioExiste = await Usuario.findOne({ email });
@@ -87,11 +102,17 @@ app.post("/cadastro", async (req, res) => {
       return res.status(409).json({ error: "Este e-mail já está em uso." });
     }
 
+    const cpfCnpjExiste = await Usuario.findOne({ cpfCnpj: cpfCnpjLimpo });
+    if (cpfCnpjExiste) {
+      return res.status(409).json({ error: "Este CPF/CNPJ já está cadastrado." });
+    }
+
     const novoUsuario = new Usuario({
       nome,
       email,
       senha,
-      telefone,
+      telefone: telefoneLimpo,
+      cpfCnpj: cpfCnpjLimpo,
       cargo: "cliente"
     });
     await novoUsuario.save();
