@@ -71,12 +71,12 @@ function NavBar() {
             <Link to="/" className="hover:text-[#F55D22] transition-colors">Início</Link>
             <Link to="/sobre" className="hover:text-[#F55D22] transition-colors">Sobre</Link>
             
-            {user?.cargo === 'admin' && (
+            {user?.cargo === 'admin' && !user.hasEstablishment && (
               <Link 
-                to={user.hasEstablishment ? "/painel-loja" : "/cadastrar-loja"} 
+                to="/cadastrar-loja" 
                 className="hover:text-[#F55D22] transition-colors"
               >
-                {user.hasEstablishment ? "Painel do Estabelecimento" : "Cadastrar uma Loja"}
+                Cadastrar uma Loja
               </Link>
             )}
           </div>
@@ -92,6 +92,14 @@ function NavBar() {
           ) : (
             <div className="flex items-center gap-4">
               
+              {user.hasEstablishment && (
+                <Link to="/painel-loja">
+                  <button className="bg-gray-100 border border-gray-200 text-gray-800 px-4 py-2 font-bold rounded-xl hover:bg-gray-200 transition-colors text-sm">
+                    Acessar Painel
+                  </button>
+                </Link>
+              )}
+
               <div className="relative">
                 <button 
                   onClick={() => setInboxAberto(!inboxAberto)} 
@@ -143,9 +151,11 @@ function NavBar() {
 
               <span className="font-bold text-gray-800">{user.nome}</span>
 
-              <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 font-bold border-2 border-white shadow-sm">
-                {user?.nome ? user.nome.charAt(0).toUpperCase() : "?"}
-              </div>
+              <Link to="/conta" title="Acessar minha conta">
+                <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 font-bold border-2 border-white shadow-sm hover:ring-2 hover:ring-[#F55D22] transition-all cursor-pointer">
+                  {user?.nome ? user.nome.charAt(0).toUpperCase() : "?"}
+                </div>
+              </Link>
 
               <button
                 onClick={logout}
@@ -192,9 +202,11 @@ function NavBar() {
                 <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">{convites.length}</span>
               </div>
               
-              <button onClick={() => setMenuAberto(false)} className="bg-[#F55D22] p-3 text-white font-bold w-full rounded-xl">
-                Meu Perfil
-              </button>
+              <Link to="/conta" onClick={() => setMenuAberto(false)} className="w-full">
+                <button className="bg-gray-100 border border-gray-200 text-gray-800 p-3 font-bold w-full rounded-xl hover:bg-gray-200 transition-colors">
+                  Meu Perfil
+                </button>
+              </Link>
 
               {user.cargo === 'admin' && (
                 <Link

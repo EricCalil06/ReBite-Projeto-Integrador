@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import NavBar from "./components/NavBar";
 
@@ -13,6 +12,7 @@ import CadastrarLoja from "./pages/PaginaParaLojistas/CadastrarLoja.jsx";
 import PainelLoja from "./pages/PaginaParaLojistas/PainelLoja.jsx";
 import PaginaCliente from "./pages/Cliente/paginaCliente.jsx";
 import Debug from "./pages/Debug/index.jsx"
+import Conta from "./pages/Conta/index.jsx";
 
 function App() {
   return (
@@ -39,6 +39,8 @@ function App() {
           <Route path="/pagina-cliente" element={<PaginaCliente />} />
 
           <Route path="/debug" element={<Debug />} />
+
+          <Route path="/conta" element={<Conta />} />
         </Routes>
 
         <Footer />

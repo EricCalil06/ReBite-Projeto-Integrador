@@ -27,8 +27,6 @@ function Login() {
 
       // ... dentro da função handleLogin no seu Login.jsx
       if (response.ok) {
-        console.log("Sucesso:", data);
-
         localStorage.setItem("token", data.token);
         localStorage.setItem("cargo", data.cargo);
         localStorage.setItem("usuarioId", data.id);
@@ -52,16 +50,16 @@ function Login() {
             });
             const dadosLoja = await resLoja.json();
             if (dadosLoja.existe) {
-              navigate("/painel-loja");
+              navigate("/");
             } else {
-              navigate("/cadastrar-loja");
+              navigate("/");
             }
           } catch (err) {
             console.error("Erro ao checar estabelecimento:", err);
-            navigate("/cadastrar-loja");
+            navigate("/");
           }
         } else if (data.cargo === "funcionario") {
-          navigate("/debug");
+          navigate("/");
         } else {
           navigate("/pagina-cliente");
         }
