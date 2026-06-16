@@ -281,8 +281,15 @@ app.get('/produtos', async (req, res) => {
             estabelecimentoId = estId;
         } else if (donoId) {
             const est = await Estabelecimento.findOne({ donoId });
-            if (!est) return res.status(404).json({ error: "Loja não encontrada." });
-            estabelecimentoId = est._id;
+            if (est) {
+                estabelecimentoId = est._id;
+            } else {
+                const usuario = await Usuario.findById(donoId);
+                if (!usuario || !usuario.estabelecimentoId) {
+                    return res.status(404).json({ error: "Loja não encontrada." });
+                }
+                estabelecimentoId = usuario.estabelecimentoId;
+            }
         } else {
             return res.status(401).json({ error: "Identificação não fornecida." });
         }

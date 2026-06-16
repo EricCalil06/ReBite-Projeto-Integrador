@@ -29,6 +29,15 @@
           }
         }
       ],
+
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "O ReBite precisa da câmera para escanear códigos de barras de produtos."
+        }
+      ],
+      
       "@react-native-community/datetimepicker",
       "expo-image"
     ],
