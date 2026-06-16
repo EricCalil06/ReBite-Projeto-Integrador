@@ -6,7 +6,7 @@ function PainelLoja() {
   const [produtos, setProdutos] = useState([]);
   const [funcionarios, setFuncionarios] = useState([]);
   const usuarioId = localStorage.getItem("usuarioId");
-  const [loja, setLoja] = useState(null); // Começa como null até carregar do banco
+  const [loja, setLoja] = useState(null); 
   const [editandoNome, setEditandoNome] = useState(false);
   const [novoNomeLoja, setNovoNomeLoja] = useState("");
   const [pedidos, setPedidos] = useState([]);
@@ -32,6 +32,11 @@ function PainelLoja() {
     "x-usuario-id": usuarioId,
   };
 
+  function converterDataParaISO(dataBR) {
+  const [dia, mes, ano] = dataBR.split("/");
+  return new Date(`${ano}-${mes}-${dia}`).toISOString();
+  }
+  
   async function carregarDados() {
     try {
       if (aba === "produtos") {
@@ -55,7 +60,6 @@ function PainelLoja() {
     }
   }
 
-  // 2. Busca os dados da loja pelo ID do usuário logado
   async function carregarPerfilLoja() {
     try {
       const res = await fetch("http://localhost:5500/estabelecimento/perfil", {
@@ -73,7 +77,6 @@ function PainelLoja() {
     }
   }
 
-  // 3. Busca os pedidos recebidos usando o ID real da loja
   async function carregarPedidos(estabelecimentoId) {
     const idParaBuscar =
       estabelecimentoId || (loja && loja._id) || "6a24a0b6c7eb1b3b5a1f71b5";
@@ -145,6 +148,7 @@ function PainelLoja() {
       alertasAlergicos: "",
       descricao: "",
       imagem: "",
+      validade: converterDataParaISO(formProd.validade),
     });
     carregarDados();
   }
@@ -573,7 +577,8 @@ function PainelLoja() {
               </div>
 
               <input
-                type="date"
+                type="text"
+                placeholder="Validade (DD/MM/AAAA)"
                 value={formProd.validade}
                 onChange={(e) =>
                   setFormProd({ ...formProd, validade: e.target.value })

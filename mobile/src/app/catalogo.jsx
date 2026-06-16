@@ -34,6 +34,11 @@ export default function Catalogo() {
     buscarProdutos();
   }, []);
 
+  function converterDataParaISO(dataBR) {
+  const [dia, mes, ano] = dataBR.split("/");
+  return new Date(`${ano}-${mes}-${dia}`).toISOString();
+  }
+
   async function buscarProdutos() {
     try {
       const res = await fetch("http://10.0.2.2:5500/produtos", {
@@ -172,7 +177,7 @@ export default function Catalogo() {
           ...form,
           preco: Number(form.preco),
           quantidade: Number(form.quantidade),
-          validade: new Date(form.validade).toISOString(),
+          validade: converterDataParaISO(form.validade),
           peso: Number(form.peso) || 0,
         }),
       });
@@ -368,7 +373,7 @@ export default function Catalogo() {
                 { label: "Descrição", key: "descricao", placeholder: "Opcional" },
                 { label: "Preço (R$) *", key: "preco", placeholder: "Ex: 4.50", keyboard: "numeric" },
                 { label: "Quantidade *", key: "quantidade", placeholder: "Ex: 10", keyboard: "numeric" },
-                { label: "Validade * (AAAA-MM-DD)", key: "validade", placeholder: "Ex: 2026-06-30" },
+                { label: "Validade * (DD/MM/AAAA)", key: "validade", placeholder: "Ex: 30/06/2026" },
                 { label: "Alérgicos", key: "alertasAlergicos", placeholder: "Ex: Glúten, Lactose" },
                 { label: "Categoria *", key: "categoria", placeholder: "Ex: Pães, Doces" },
                 { label: "Peso (kg)", key: "peso", placeholder: "Ex: 0.5", keyboard: "numeric" },
