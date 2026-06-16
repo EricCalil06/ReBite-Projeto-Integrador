@@ -4,29 +4,28 @@ import logoReBiteH from "../../assets/logoReBiteH.png";
 
 function CadastrarLoja() {
   const [nomeLoja, setNomeLoja] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [endereco, setEndereco] = useState("");
   const navigate = useNavigate();
   const usuarioId = localStorage.getItem("usuarioId");
 
   async function handleCadastroLoja(e) {
     e.preventDefault();
 
-    const response = await fetch("http://localhost:5500/estabelecimento", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-usuario-id": usuarioId
-      },
-      body: JSON.stringify({ nome: nomeLoja }) // Envia o nome digitado na tela
-    });
-    
     try {
-      const response = await fetch("http://localhost:5500/funcionarios", { 
-        method: "GET", 
-        headers: { "x-usuario-id": usuarioId } 
+      const response = await fetch("http://localhost:5500/estabelecimento", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-usuario-id": usuarioId
+        },
+        body: JSON.stringify({ nome: nomeLoja, descricao, endereco })
       });
 
       if (response.ok) {
         navigate("/painel-loja");
+      } else {
+        alert("Houve um problema ao salvar os dados da sua loja.");
       }
     } catch (error) {
       console.error("Erro ao registrar estabelecimento:", error);
@@ -35,7 +34,7 @@ function CadastrarLoja() {
   }
 
   return (
-    <div className="h-screen w-full bg-slate-50 flex items-center justify-center p-6">
+    <div className="h-screen w-full bg-slate-50 flex items-center justify-center p-6 overflow-y-auto">
       <div className="bg-white rounded-[2rem] shadow-xl p-10 w-full max-w-md border border-gray-100">
         <img
           src={logoReBiteH}
@@ -61,6 +60,32 @@ function CadastrarLoja() {
               placeholder="Ex: Padaria do seu Jorge"
               className="w-full px-5 py-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F55D22]"
               required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-800 mb-2">
+              Descrição
+            </label>
+            <textarea
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
+              placeholder="Coloque sua descrição"
+              rows={3}
+              className="w-full px-5 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#F55D22] resize-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-800 mb-2">
+              Endereço
+            </label>
+            <input
+              type="text"
+              value={endereco}
+              onChange={(e) => setEndereco(e.target.value)}
+              placeholder="Digite o endereço da sua loja"
+              className="w-full px-5 py-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F55D22]"
             />
           </div>
 

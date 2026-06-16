@@ -66,7 +66,6 @@ async function obterEstabelecimento(req, res, next) {
     let est = await Estabelecimento.findOne({ donoId });
     console.log("middleware - estabelecimento encontrado:", est?._id);
     if (!est) {
-        // Cria um provisório se o Admin não tiver para não quebrar o fluxo
         est = new Estabelecimento({ nome: "Meu Estabelecimento Provisório", donoId });
         await est.save();
     }
@@ -143,8 +142,6 @@ app.get('/me', async (req, res) => {
         const decoded = jwt.verify(token, "id-secreto");
         const usuario = await Usuario.findOne({ email: decoded.email });
         if (!usuario) return res.status(404).json({ error: "Usuário não encontrado" });
-        
-        // Retorna dados públicos do usuário
         res.status(200).json({ nome: usuario.nome, id: usuario._id });
     } catch (e) {
         res.status(401).json({ error: "Token inválido" });
@@ -170,7 +167,6 @@ app.delete('/funcionarios/:id', async (req, res) => {
     res.json({ message: "Funcionário removido" });
 });
 
-// Cadastrar funcionário
 app.post('/funcionarios/cadastrar', async (req, res) => {
     try {
         const donoId = req.headers['x-usuario-id'];
@@ -181,7 +177,6 @@ app.post('/funcionarios/cadastrar', async (req, res) => {
             return res.status(403).json({ error: "Apenas administradores podem convidar funcionários." });
         }
 
-        // Busca a loja do admin
         const loja = await Estabelecimento.findOne({ donoId });
         if (!loja) {
             return res.status(404).json({ error: "Você precisa ter uma loja cadastrada antes de adicionar funcionários." });
@@ -201,7 +196,6 @@ app.post('/funcionarios/cadastrar', async (req, res) => {
             return res.status(400).json({ error: "Este usuário já é funcionário da sua loja." });
         }
 
-        // Verifica se já existe um convite pendente para essa pessoa nessa loja
         const conviteExistente = await Convite.findOne({ 
             emailColaborador: email, 
             estabelecimentoId: loja._id, 
@@ -226,7 +220,6 @@ app.post('/funcionarios/cadastrar', async (req, res) => {
     }
 });
 
-// ADICIONAR esta nova rota (pode substituir o GET /funcionarios existente ou coexistir)
 app.get('/funcionarios/da-loja', async (req, res) => {
     try {
         const donoId = req.headers['x-usuario-id'];
@@ -237,7 +230,7 @@ app.get('/funcionarios/da-loja', async (req, res) => {
 
         const funcionarios = await Usuario.find(
             { cargo: 'funcionario', estabelecimentoId: loja._id },
-            'nome email telefone estabelecimentoId createdAt' // só retorna campos necessários, omite senha
+            'nome email telefone estabelecimentoId createdAt'
         );
 
         res.status(200).json(funcionarios);
@@ -315,11 +308,16 @@ app.put('/produtos/:id', async (req, res) => {
 });
 
 app.delete('/produtos/:id', async (req, res) => {
-    await Produto.findByIdAndDelete(req.params.id);
-    res.json({ message: "Deletado com sucesso" });
+    try {
+        const { id } = req.params;
+        const produto = await Produto.findByIdAndDelete(id);
+        if (!produto) return res.status(404).json({ error: "Produto não encontrado." });
+        res.status(200).json({ message: "Produto removido com sucesso." });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
-// READ: Listar apenas os produtos do vendedor logado
 app.get('/produtos/vendedor/:vendedorId', async (req, res) => {
     try {
         const produtos = await Produto.find({ vendedorId: req.params.vendedorId });
@@ -329,7 +327,6 @@ app.get('/produtos/vendedor/:vendedorId', async (req, res) => {
     }
 });
 
-// UPDATE: Editar dados do produto
 app.put('/produtos/:id', async (req, res) => {
     try {
         const produtoAtualizado = await Produto.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -339,7 +336,6 @@ app.put('/produtos/:id', async (req, res) => {
     }
 });
 
-// DELETE: Remover produto da sacola
 app.delete('/produtos/:id', async (req, res) => {
     try {
         await Produto.findByIdAndDelete(req.params.id);
@@ -392,52 +388,43 @@ app.post('/estabelecimento', async (req, res) => {
 
 app.get('/estabelecimento/perfil', async (req, res) => {
     try {
-        // Captura os dois cabeçalhos possíveis enviados pelo Frontend
         const estabelecimentoId = req.headers['x-estabelecimento-id'];
         const donoId = req.headers['x-usuario-id'];
 
         const Estabelecimento = obterModelEstabelecimento();
         let loja = null;
 
-        // Se o frontend informou o ID direto da loja (caso da PaginaCliente), busca por ele
         if (estabelecimentoId) {
             loja = await Estabelecimento.findById(estabelecimentoId);
-        } 
-        // Se não informou o ID da loja, mas informou o ID do usuário (caso do Painel da Loja), busca pelo dono
+        }
         else if (donoId) {
             loja = await Estabelecimento.findOne({ donoId });
         } 
-        // Se não enviou nenhum dos dois, barra por falta de identificação (Erro 401)
         else {
             return res.status(401).json({ error: "Estabelecimento ou Usuário não identificado." });
         }
 
-        // Se a busca não encontrar nada no banco, retorna o objeto padrão provisório
         if (!loja) {
             return res.status(200).json({ nome: "Minha Loja" });
         }
 
-        // Retorna a loja correta encontrada
         res.status(200).json(loja);
     } catch (error) {
         console.error("Erro na rota GET /estabelecimento/perfil:", error);
         res.status(500).json({ error: error.message });
     }
 });
-// Rota no backend para o frontend checar se o Admin já tem uma loja
+
 app.get('/estabelecimento/checar', async (req, res) => {
     try {
         const donoId = req.headers['x-usuario-id'];
         if (!donoId) return res.status(401).json({ error: "Usuário não identificado." });
 
-        // Procura se já existe uma loja para este ID de administrador
         const estabelecimento = await Estabelecimento.findOne({ donoId });
         
         if (estabelecimento) {
-            // Se achou, retorna que já existe
             return res.status(200).json({ existe: true, estabelecimento });
         } else {
-            // Se não achou, diz que não existe
             return res.status(200).json({ existe: false });
         }
     } catch (error) {
@@ -447,10 +434,8 @@ app.get('/estabelecimento/checar', async (req, res) => {
 
 app.get('/estabelecimento/todos', async (req, res) => {
   try {
-    // Buscando os estabelecimentos no MongoDB
     const estabelecimentos = await Estabelecimento.find();
-    
-    // Retorna a lista de lojas para o aplicativo
+
     res.status(200).json(estabelecimentos);
   } catch (error) {
     console.error("Erro ao buscar estabelecimentos:", error);
@@ -458,39 +443,31 @@ app.get('/estabelecimento/todos', async (req, res) => {
   }
 });
 
-// ROTA CORRIGIDA: Buscar estabelecimento e itens baseado nos campos reais do banco
 app.get('/estabelecimento/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    // 1. Busca o estabelecimento
     const estabelecimento = await Estabelecimento.findById(id);
     if (!estabelecimento) {
       return res.status(404).json({ message: "Estabelecimento não encontrado." });
     }
 
-    // 2. Busca todos os itens (produtos/sacolas) vinculados a este estabelecimentoId
-    // IMPORTANTE: Use o nome exato do seu Model de produtos aqui (ex: Produto ou Item)
     const itensDoBanco = await Produto.find({ estabelecimentoId: id });
 
     const categoriasMap = {};
     const sacolas = [];
-
-    // 3. Separa dinamicamente olhando o seu campo 'tipo' e 'categoria' do banco
     itensDoBanco.forEach(item => {
       if (item.tipo === "sacola_surpresa") {
-        // Se for sacola surpresa (conforme a imagem do seu banco)
         sacolas.push({
           id: item._id,
           nome: item.nome,
           categoria: item.categoria || "Sacola Surpresa",
           preco: item.preco,
-          precoOriginal: item.precoOriginal || (item.preco * 1.3), // Fallback caso não tenha precoOriginal cadastrado
+          precoOriginal: item.precoOriginal || (item.preco * 1.3), 
           unidade: "1un",
           imagem: item.imagem || null
         });
       } else {
-        // Se for produto comum (Pães, Doces, Laticínios, etc.)
         const catNome = item.categoria || "Geral";
 
         if (!categoriasMap[catNome]) {
@@ -511,10 +488,8 @@ app.get('/estabelecimento/:id', async (req, res) => {
       }
     });
 
-    // Converte o mapa de categorias para o formato de Array que o index.jsx mapeia
     const categoriasProdutos = Object.values(categoriasMap);
 
-    // 4. Retorna a resposta perfeita que o mobile espera
     res.status(200).json({
       ...estabelecimento._doc,
       categoriasProdutos,
@@ -555,17 +530,14 @@ app.get('/pedidos/estabelecimento', async (req, res) => {
             return res.status(400).json({ error: "ID do estabelecimento não fornecido." });
         }
 
-        // Acessa o Types diretamente de dentro do mongoose importado no topo do arquivo
         const { Types } = mongoose;
 
-        // Valida se o ID recebido tem o formato correto de 24 caracteres hexadecimais
         if (!Types.ObjectId.isValid(estId)) {
             return res.status(400).json({ error: "ID do estabelecimento em formato inválido." });
         }
 
         const Pedido = mongoose.model('Pedido');
         
-        // Convertemos a String estId em um ObjectId real usando o Types nativo do mongoose
         const pedidos = await Pedido.find({ 
             estabelecimentoId: new Types.ObjectId(estId) 
         })
@@ -667,22 +639,19 @@ app.patch('/pedidos/:id/status', async (req, res) => {
     }
 });
 //----------------------------------------------PEDIDOS------------------------------------------------
-// ROTA: Buscar um único produto/sacola por ID e trazer sugestões
 app.get('/produto/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Use o nome do seu Model cadastrado (ex: Produto)
     const produtoEncontrado = await Produto.findById(id);
 
     if (!produtoEncontrado) {
       return res.status(404).json({ message: "Item não encontrado no banco." });
     }
 
-    // Busca até 5 outros produtos da mesma loja para listar no carrossel inferior como sugestão
     const outrosProdutos = await Produto.find({
       estabelecimentoId: produtoEncontrado.estabelecimentoId,
-      _id: { $ne: id } // Não traz o próprio produto atual repetido na lista
+      _id: { $ne: id }
     }).limit(5);
 
     res.status(200).json({
@@ -699,7 +668,6 @@ app.get('/produto/:id', async (req, res) => {
 
 app.post("/pedido/novo", async (req, res) => {
   try {
-    // Certifique-se de que o express.json() está ativo no topo do seu app.js
     const { estabelecimentoId, usuarioId, itens, total } = req.body;
 
     console.log("Recebido no Backend:", req.body);
@@ -738,7 +706,6 @@ if (process.env.NODE_ENV !== 'test') {
   conectarAoMongo()
     .then(async () => {
       console.log('Conectado ao MongoDB');
-      //await seedHyperlinks();
     })
     .catch(err => console.log("Erro conexão Mongo:", err))
 

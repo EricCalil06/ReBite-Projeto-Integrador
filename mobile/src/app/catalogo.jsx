@@ -199,11 +199,26 @@ export default function Catalogo() {
   }
 
   async function excluirSelecionados() {
+    if (selecionados.length === 0) {
+      Alert.alert("Nenhum item selecionado", "Selecione ao menos um produto.");
+      return;
+    }
+
     Alert.alert("Excluir", `Excluir ${selecionados.length} produto(s)?`, [
       { text: "Cancelar", style: "cancel" },
       {
-        text: "Excluir", style: "destructive", onPress: () => {
-          Alert.alert("Em breve", "Rota de exclusão ainda não implementada no backend.");
+        text: "Excluir", style: "destructive", onPress: async () => {
+          try {
+            await Promise.all(
+              selecionados.map(id =>
+                fetch(`http://10.0.2.2:5500/produtos/${id}`, { method: "DELETE" })
+              )
+            );
+            setSelecionados([]);
+            buscarProdutos();
+          } catch (err) {
+            Alert.alert("Erro", "Não foi possível excluir os produtos.");
+          }
         }
       }
     ]);
@@ -251,6 +266,16 @@ export default function Catalogo() {
           </TouchableOpacity>
         </View>
       </View>
+
+      {selecionados.length > 0 && (
+        <View style={styles.excluirBarra}>
+          <Text style={styles.excluirTexto}>{selecionados.length} selecionado(s)</Text>
+          <TouchableOpacity style={styles.excluirBtn} onPress={excluirSelecionados}>
+            <Feather name="trash-2" size={16} color="#fff" />
+            <Text style={styles.excluirBtnTexto}>Excluir</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <FlatList
         data={produtos}
@@ -469,4 +494,8 @@ const styles = StyleSheet.create({
   tipoBtn: { flex: 1, borderWidth: 1, borderColor: "#E5E7EB", borderRadius: 999, paddingVertical: 10, alignItems: "center" },
   tipoBtnAtivo: { backgroundColor: "#F05A28", borderColor: "#F05A28" },
   tipoBtnTexto: { fontWeight: "bold", color: "#555", fontSize: 14 },
+  excluirBarra: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: "#FFF4F0", paddingHorizontal: 20, paddingVertical: 10, marginBottom: 8 },
+  excluirTexto: { fontSize: 13, color: "#F05A28", fontWeight: "600" },
+  excluirBtn: { flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "#EF4444", borderRadius: 999, paddingVertical: 6, paddingHorizontal: 14 },
+  excluirBtnTexto: { color: "#fff", fontWeight: "bold", fontSize: 13 },
 });
