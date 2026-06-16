@@ -7,7 +7,6 @@ import CardsCTA from "./cardsCTA";
 import FaqSection from "./faqSection";
 
 function Inicio() {
-  // Lógica para fazer o FAQ abrir e fechar
   const [openFaq, setOpenFaq] = useState(null);
 
   const toggleFaq = (index) => {

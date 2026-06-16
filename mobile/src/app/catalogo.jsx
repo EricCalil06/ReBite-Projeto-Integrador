@@ -381,8 +381,8 @@ export default function Catalogo() {
       <Modal visible={modalVisivel} animationType="slide" transparent>
         <KeyboardAvoidingView
           style={styles.modalOverlay}
-          behavior="padding" // Alterado para funcionar perfeitamente em ambas as plataformas
-          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20} // Adicionado respiro para o teclado do Android
+          behavior="padding" 
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20} 
         >
           <View style={styles.modalBox}>
             <View style={styles.modalHeader}>

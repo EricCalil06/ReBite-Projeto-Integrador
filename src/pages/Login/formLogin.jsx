@@ -3,7 +3,6 @@ import logoReBiteH from "../../assets/logoReBiteH.png";
 
 function FormLogin() {
   return (
-    // Contêiner do fundo
     <div className="h-[92%] w-full bg-slate-50 relative overflow-hidden flex items-center justify-center">
       <div className="absolute top-0 left-0 w-[45%] h-[150%] bg-[#f7b094] rounded-r-full -translate-y-40"></div>
 

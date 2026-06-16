@@ -11,13 +11,11 @@ export default function AuthRedirector({ children }) {
 
   useEffect(() => {
     async function checarDestino() {
-      // Se não estiver logado, não faz nada
       if (!user) {
         setLoading(false);
         return;
       }
 
-      // Se já estiver na página de destino, para o loading
       if (location.pathname === "/debug" || location.pathname === "/painel-loja" || location.pathname === "/cadastrar-loja") {
         setLoading(false);
         return;
@@ -26,14 +24,12 @@ export default function AuthRedirector({ children }) {
       if (user.cargo === 'funcionario') {
         navigate("/debug");
       } else if (user.cargo === 'admin') {
-        // Dentro do AuthRedirector.jsx (na parte do admin)
           const res = await fetch("http://localhost:5500/estabelecimento/minha-loja", {
               headers: { "x-usuario-id": user.id }
           });
           const data = await res.json();
 
           if (data.existe) {
-              // Redireciona para o painel daquela loja específica
               navigate(`/painel-loja/${data.lojaId}`);
           } else {
               navigate("/cadastrar-loja");
@@ -45,7 +41,7 @@ export default function AuthRedirector({ children }) {
     checarDestino();
   }, [user, navigate, location.pathname]);
 
-  if (loading) return <div>Carregando...</div>; // Ou um spinner bonito
+  if (loading) return <div>Carregando...</div>;
 
   return children;
 }

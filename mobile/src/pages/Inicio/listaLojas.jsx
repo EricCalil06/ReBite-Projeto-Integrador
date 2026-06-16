@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"; // Importado hooks para gerenciar o estado e ciclo de vida
+import { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -14,14 +14,12 @@ function Estrelas({ quantidade }) {
 }
 
 export default function ListaLojas() {
-  // Estados para armazenar as lojas vindas do banco e o controle de carregamento
   const [lojas, setLojas] = useState([]);
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
     async function carregarLojas() {
       try {
-        // IP padrão para acessar o localhost da máquina a partir do emulador Android (10.0.2.2)
         const response = await fetch("http://10.0.2.2:5500/estabelecimento/todos");
         
         if (response.ok) {
@@ -40,7 +38,6 @@ export default function ListaLojas() {
     carregarLojas();
   }, []);
 
-  // Se o banco ainda estiver respondendo, exibe um indicador de progresso limpo
   if (carregando) {
     return (
       <View style={[styles.container, { paddingVertical: 20, alignItems: "center" }]}>
@@ -58,9 +55,9 @@ export default function ListaLojas() {
       ) : (
         lojas.map((loja) => (
           <TouchableOpacity
-            key={loja._id} // Alterado para _id padrão do MongoDB
+            key={loja._id} 
             style={styles.item}
-            onPress={() => router.push(`/loja/${loja._id}`)} // Navega passando o ID real do banco
+            onPress={() => router.push(`/loja/${loja._id}`)} 
           >
             <View style={styles.logo}>
               <Feather name="shopping-bag" size={24} color="#F05A28" />

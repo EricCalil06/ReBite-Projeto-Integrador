@@ -3,7 +3,7 @@ import {
   View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, Dimensions, ActivityIndicator
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from "expo-router"; // Importado useLocalSearchParams
+import { router, useLocalSearchParams } from "expo-router"; 
 
 const { width } = Dimensions.get("window");
 
@@ -26,10 +26,8 @@ function calcularDesconto(preco, precoOriginal) {
 }
 
 export default function LojaScreen() {
-  const { id } = useLocalSearchParams(); // Pega o ID da loja vindo da navegação anterior
+  const { id } = useLocalSearchParams(); 
   const [aba, setAba] = useState("catalogo");
-  
-  // Estados para gerenciar a requisição da API
   const [loja, setLoja] = useState(null);
   const [categoriasProdutos, setCategoriasProdutos] = useState([]);
   const [sacolas, setSacolas] = useState([]);
@@ -45,7 +43,6 @@ export default function LojaScreen() {
         if (response.ok) {
           const dados = await response.json();
           
-          // Mapeia os dados retornados pela sua API
           setLoja({
             nome: dados.nome,
             descricao: dados.descricao || "Sem descrição disponível.",
@@ -55,7 +52,6 @@ export default function LojaScreen() {
             distancia: dados.distancia || "1.2 km de você",
           });
 
-          // Preenche os produtos e sacolas se o seu backend já os retornar agrupados
           setCategoriasProdutos(dados.categoriasProdutos || []);
           setSacolas(dados.sacolas || []);
         } else {
@@ -71,7 +67,6 @@ export default function LojaScreen() {
     buscarDadosDaLoja();
   }, [id]);
 
-  // Se estiver buscando as informações da API, exibe o loading na tela
   if (carregando) {
     return (
       <View style={[styles.screen, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -80,7 +75,6 @@ export default function LojaScreen() {
     );
   }
 
-  // Tratativa caso o ID não seja encontrado ou a rota falhe
   if (!loja) {
     return (
       <View style={[styles.screen, { justifyContent: 'center', alignItems: 'center', padding: 20 }]}>

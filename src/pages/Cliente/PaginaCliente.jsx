@@ -22,7 +22,6 @@ async function carregarDadosLoja() {
   try {
     setCarregando(true);
 
-    // 1. Busca os produtos da padaria
     const resProd = await fetch("http://localhost:5500/produtos", {
       headers: {
         "x-estabelecimento-id": idDaLojaFixo
@@ -40,9 +39,7 @@ async function carregarDadosLoja() {
       setProdutos([]);
     }
 
-    // 2. Busca o perfil da loja de forma segura
     try {
-      // ATENÇÃO: Verifica se o token foi salvo com letras maiúsculas ou minúsculas no seu Login
       const usuarioId = localStorage.getItem("usuarioId") || localStorage.getItem("id");
       const token = localStorage.getItem("token");
 
@@ -58,7 +55,6 @@ async function carregarDadosLoja() {
         const dadosLoja = await resPerfil.json();
         setLoja(dadosLoja);
       } else {
-        // Se a API falhar ou der 401, forçamos o nome correto da Padaria do B
         setLoja({ _id: idDaLojaFixo, nome: "Padaria do B" });
       }
     } catch (perfilErr) {
@@ -112,12 +108,10 @@ async function carregarDadosLoja() {
 
   async function finalizarPedido() {
     if (!loja || !loja._id) {
-      //alert("Erro: Dados da loja não carregados corretamente.");
       return;
     }
 
     if (carrinho.length === 0) {
-      //alert("Seu carrinho está vazio! Adicione algum produto antes de finalizar.");
       return;
     }
 

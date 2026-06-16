@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
 
 function Sacola() {
-  const vendedorId = localStorage.getItem("usuarioId"); // Pega o ID do vendedor logado
+  const vendedorId = localStorage.getItem("usuarioId");
   const [produtos, setProdutos] = useState([]);
   const [nome, setNome] = useState("");
   const [preco, setPreco] = useState("");
   const [quantidade, setQuantidade] = useState("");
-  const [idEmEdicao, setIdEmEdicao] = useState(null); // Controla se estamos editando ou criando
+  const [idEmEdicao, setIdEmEdicao] = useState(null);
 
-  // Carregar produtos do banco assim que a página abrir
   useEffect(() => {
     buscarProdutos();
   }, []);
@@ -23,7 +22,6 @@ function Sacola() {
     }
   }
 
-  // Criar ou Salvar Edição de Produto
   async function handleSubmit(e) {
     e.preventDefault();
 
@@ -31,7 +29,6 @@ function Sacola() {
 
     try {
       if (idEmEdicao) {
-        // Modo Edição (PUT)
         await fetch(`http://localhost:5500/produtos/${idEmEdicao}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -39,7 +36,6 @@ function Sacola() {
         });
         setIdEmEdicao(null);
       } else {
-        // Modo Criação (POST)
         await fetch("http://localhost:5500/produtos", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -47,7 +43,6 @@ function Sacola() {
         });
       }
 
-      // Limpa os campos e atualiza a lista
       setNome("");
       setPreco("");
       setQuantidade("");
@@ -57,7 +52,6 @@ function Sacola() {
     }
   }
 
-  // Prepara os campos para edição
   function iniciarEdicao(produto) {
     setIdEmEdicao(produto._id);
     setNome(produto.nome);
@@ -65,7 +59,6 @@ function Sacola() {
     setQuantidade(produto.quantidade);
   }
 
-  // Deletar Produto
   async function deletarProduto(id) {
     if (confirm("Deseja realmente remover este produto?")) {
       try {

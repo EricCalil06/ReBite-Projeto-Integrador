@@ -7,7 +7,6 @@ function FormCadastro({ step, goToNextStep }) {
   const navigate = useNavigate();
   const [aceitouTermos, setAceitouTermos] = useState(false);
 
-  // ADICIONADO: 'senha' inclusa no estado inicial do formulário
   const [formData, setFormData] = useState({
     nome: "",
     dataNascimento: "",

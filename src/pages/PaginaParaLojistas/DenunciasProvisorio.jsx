@@ -17,12 +17,11 @@ function DenunciasProvisorio() {
 
   async function enviarDenuncia(e) {
     e.preventDefault();
-    // Simulando denúncia enviada pelo usuário logado para o primeiro estabelecimento ativo
     await fetch("http://localhost:5500/denuncias", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        estabelecimentoId: "6657c8b4f2c52923c64390f4", // Mock provisório de ID
+        estabelecimentoId: "6657c8b4f2c52923c64390f4",
         usuarioDenuncianteId: localStorage.getItem("usuarioId") || "69fbb2c52923c64390f3d9fc",
         motivo,
         descricaoDetalhada: descricao

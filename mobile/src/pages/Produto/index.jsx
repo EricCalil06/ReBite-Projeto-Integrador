@@ -1,18 +1,17 @@
-import { useState, useEffect } from "react"; // Importado hooks para estado e ciclo de vida
+import { useState, useEffect } from "react"; 
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, Dimensions, ActivityIndicator
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from "expo-router"; // Importado useLocalSearchParams
+import { router, useLocalSearchParams } from "expo-router"; 
 import { useCarrinho } from "../../context/CarrinhoContext";
 
 const { width } = Dimensions.get("window");
 
 export default function ProdutoScreen() {
-  const { id } = useLocalSearchParams(); // Captura o ID do produto ou sacola clicada
+  const { id } = useLocalSearchParams(); 
   const { adicionarItem } = useCarrinho();
 
-  // Estados para gerenciar os dados da API
   const [produto, setProduto] = useState(null);
   const [outrosProdutos, setOutrosProdutos] = useState([]);
   const [carregando, setCarregando] = useState(true);
@@ -20,7 +19,6 @@ export default function ProdutoScreen() {
   useEffect(() => {
     async function buscarDadosDoProduto() {
       try {
-        // Chamada para buscar o produto pelo ID no IP padrão do emulador
         const response = await fetch(`http://10.0.2.2:5500/produto/${id}`);
         
         if (response.ok) {
@@ -57,7 +55,6 @@ export default function ProdutoScreen() {
     router.push("/carrinho");
   };
 
-  // Função auxiliar para formatar a validade ISO do banco em algo legível (Ex: 02/02/2026)
   const formatarValidade = (dataIso) => {
     if (!dataIso) return "Não informada";
     try {

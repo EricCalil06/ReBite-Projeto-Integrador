@@ -25,7 +25,6 @@ function Login() {
 
       const data = await response.json();
 
-      // ... dentro da função handleLogin no seu Login.jsx
       if (response.ok) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("cargo", data.cargo);

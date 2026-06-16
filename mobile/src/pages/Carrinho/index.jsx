@@ -1,6 +1,6 @@
-import { useState } from "react"; // Importado useState
+import { useState } from "react"; 
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, ActivityIndicator // Importado Alert e ActivityIndicator
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, ActivityIndicator 
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -9,7 +9,6 @@ import { useAuth } from "../../context/AuthContext";
 
 
 export default function CarrinhoScreen() {
-  // ATENÇÃO: Adicione a função de limpar o carrinho no seu CarrinhoContext caso tenha criado (ex: limparCarrinho)
   const { itens, removerItem, total, limparCarrinho } = useCarrinho();
   const [enviando, setEnviando] = useState(false);
   const { user } = useAuth();
@@ -17,7 +16,6 @@ export default function CarrinhoScreen() {
   const kgSalvos = (itens.length * 0.5).toFixed(1);
   const data = new Date().toLocaleDateString("pt-BR");
 
-  // Pega o endereço e dados da loja do primeiro item do carrinho de forma dinâmica
   const enderecoLoja = itens[0]?.endereco || "Retirar no estabelecimento parceiro";
   const nomeLoja = itens[0]?.loja || "Estabelecimento Parceiro";
 
@@ -43,7 +41,6 @@ export default function CarrinhoScreen() {
     total: Number(total)
   };
 
-  // Esse log vai te mostrar no terminal se o objeto foi montado certinho!
   console.log("Enviando Pedido Completo para a API:", JSON.stringify(pedidoData, null, 2));
 
   try {
@@ -72,7 +69,6 @@ export default function CarrinhoScreen() {
         ]
       );
     } else {
-      // Se o backend rejeitar, exibe o motivo real retornado
       Alert.alert("Erro no pedido", dadosResultado.message || "Não foi possível processar seu carrinho.");
     }
   } catch (error) {
