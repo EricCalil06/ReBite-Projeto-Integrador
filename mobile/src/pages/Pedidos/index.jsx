@@ -10,10 +10,17 @@ export default function Pedidos() {
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
-    if (user?.id) buscarPedidos();
+    if (user?.id) {
+      buscarPedidos();
+    } else {
+      setPedidos([]);
+      setCarregando(false);
+    }
   }, [user]);
 
   async function buscarPedidos() {
+      setCarregando(true);
+      setPedidos([]);
     try {
       const res = await fetch(`http://10.0.2.2:5500/pedidos/usuario/${user.id}`);
       if (res.ok) setPedidos(await res.json());
