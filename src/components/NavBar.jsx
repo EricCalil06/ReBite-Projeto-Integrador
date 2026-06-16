@@ -71,7 +71,7 @@ function NavBar() {
             <Link to="/" className="hover:text-[#F55D22] transition-colors">Início</Link>
             <Link to="/sobre" className="hover:text-[#F55D22] transition-colors">Sobre</Link>
             
-            {user?.cargo === 'admin' && (
+            {user && (
               <Link 
                 to={user.hasEstablishment ? "/painel-loja" : "/cadastrar-loja"} 
                 className="hover:text-[#F55D22] transition-colors"
@@ -196,7 +196,6 @@ function NavBar() {
                 Meu Perfil
               </button>
 
-              {user.cargo === 'admin' && (
                 <Link
                   to={user.hasEstablishment ? "/painel-loja" : "/cadastrar-loja"}
                   onClick={() => setMenuAberto(false)}
@@ -204,7 +203,6 @@ function NavBar() {
                 >
                   {user.hasEstablishment ? "Acessar Loja" : "Cadastrar uma Loja"}
                 </Link>
-              )}
 
               <button
                 onClick={() => {
