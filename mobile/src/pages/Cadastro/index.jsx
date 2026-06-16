@@ -18,8 +18,6 @@ LogBox.ignoreLogs(["DateTimePicker: `onChange` is deprecated"]);
 
 const logo = require("../../../assets/images/logoReBiteH.png");
 
-// ─── Máscaras ────────────────────────────────────────────────────────────────
-
 function mascaraTelefone(valor) {
   const nums = valor.replace(/\D/g, "").slice(0, 11);
   if (nums.length <= 10) {
@@ -47,8 +45,6 @@ function mascaraCpfCnpj(valor) {
     .replace(/(\d{4})(\d)/, "$1-$2");
 }
 
-// ─── Componente ──────────────────────────────────────────────────────────────
-
 export default function Cadastro() {
   const { login } = useAuth();
 
@@ -66,8 +62,6 @@ export default function Cadastro() {
 
   const [erros, setErros] = useState({});
   const [notificacao, setNotificacao] = useState({ visivel: false, mensagem: "", tipo: "erro" });
-
-  // ─── Helpers ───────────────────────────────────────────────────────────────
 
   const exibirNotificacao = (mensagem, tipo = "erro") => {
     setNotificacao({ visivel: true, mensagem, tipo });
@@ -87,8 +81,6 @@ export default function Cadastro() {
     return `${dia}/${mes}/${ano}`;
   };
 
-  // ─── Validação local ───────────────────────────────────────────────────────
-
   const validar = () => {
     const novosErros = {};
 
@@ -106,14 +98,11 @@ export default function Cadastro() {
     return Object.keys(novosErros).length === 0;
   };
 
-  // ─── Cadastro + login automático ───────────────────────────────────────────
-
   const handleCadastro = async () => {
     if (!validar()) return;
 
     setCarregando(true);
     try {
-      // 1. Cadastrar
       const resCadastro = await fetch("http://10.0.2.2:5500/cadastro", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -157,12 +146,8 @@ export default function Cadastro() {
     }
   };
 
-  // ─── Campo helper ──────────────────────────────────────────────────────────
-
   const limparErro = (campo) =>
     setErros((prev) => ({ ...prev, [campo]: null }));
-
-  // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
     <>
@@ -311,8 +296,6 @@ export default function Cadastro() {
     </>
   );
 }
-
-// ─── Estilos ─────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: {

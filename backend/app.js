@@ -438,11 +438,12 @@ app.get('/estabelecimento/perfil', async (req, res) => {
 
 app.get('/estabelecimento/checar', async (req, res) => {
     try {
+        const Estabelecimento = obterModelEstabelecimento();
         const donoId = req.headers['x-usuario-id'];
         if (!donoId) return res.status(401).json({ error: "Usuário não identificado." });
 
         const estabelecimento = await Estabelecimento.findOne({ donoId });
-        
+
         if (estabelecimento) {
             return res.status(200).json({ existe: true, estabelecimento });
         } else {
