@@ -146,13 +146,13 @@ app.post('/login', async (req, res) => {
     { expiresIn: "7d" }
   );
 
-res.status(200).json({
-    token: token,
-    cargo: usuarioExiste.cargo,
-    id: usuarioExiste._id,
-    nome: usuarioExiste.nome,
-    estabelecimentoId: usuarioExiste.estabelecimentoId || null
-  });
+    res.status(200).json({
+        token: token,
+        cargo: usuarioExiste.cargo,
+        id: usuarioExiste._id,
+        nome: usuarioExiste.nome,
+        estabelecimentoId: usuarioExiste.estabelecimentoId || null
+    });
 });
 
 app.get('/me', async (req, res) => {
@@ -612,7 +612,7 @@ app.get('/pedidos/usuario/:usuarioId/kgs', async (req, res) => {
         const Pedido = mongoose.model('Pedido');
         const pedidos = await Pedido.find({
             usuarioId: new mongoose.Types.ObjectId(usuarioId),
-            status: { $in: ['Pronto', 'Entregue'] }
+            status: { $in: ['Pronto', 'Entregue','Retirado'] }
         }).populate('itens.produtoId', 'peso');
 
         let totalKg = 0;
@@ -655,7 +655,7 @@ app.patch('/pedidos/:id/status', async (req, res) => {
         const { id } = req.params;
         const { status } = req.body;
 
-        const statusValidos = ['Pendente', 'Preparando', 'Pronto', 'Entregue', 'Cancelado'];
+        const statusValidos = ['Pendente', 'Preparando', 'Pronto', 'Entregue', 'Cancelado','Retirado'];
         if (!statusValidos.includes(status)) {
             return res.status(400).json({ error: "Status inválido." });
         }
@@ -673,6 +673,24 @@ app.patch('/pedidos/:id/status', async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+});
+
+app.patch('/usuario/:id/senha', async (req, res) => {
+  try {
+    const { senhaAtual, novaSenha } = req.body;
+    const usuario = await Usuario.findById(req.params.id);
+
+    if (!usuario) return res.status(404).json({ mensagem: "Usuário não encontrado." });
+    if (usuario.senha !== senhaAtual) return res.status(401).json({ mensagem: "Senha atual incorreta." });
+    if (!novaSenha || novaSenha.length < 6) return res.status(400).json({ mensagem: "Nova senha deve ter ao menos 6 caracteres." });
+
+    usuario.senha = novaSenha;
+    await usuario.save();
+
+    res.status(200).json({ mensagem: "Senha alterada com sucesso!" });
+  } catch (err) {
+    res.status(500).json({ mensagem: err.message });
+  }
 });
 //----------------------------------------------PEDIDOS------------------------------------------------
 app.get('/produto/:id', async (req, res) => {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   View, Text, TextInput, TouchableOpacity,
-  StyleSheet, ActivityIndicator, ScrollView, Image, Alert
+  StyleSheet, ActivityIndicator, ScrollView, Alert
 } from "react-native";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -9,6 +9,8 @@ import { useAuth } from "../context/AuthContext";
 
 export default function PainelLoja() {
   const { user } = useAuth();
+  const isFuncionario = user?.cargo === "funcionario";
+
   const [loja, setLoja] = useState(null);
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
@@ -22,9 +24,11 @@ export default function PainelLoja() {
 
   async function buscarLoja() {
     try {
-      const res = await fetch("http://10.0.2.2:5500/estabelecimento/perfil", {
-        headers: { "x-usuario-id": user?.id }
-      });
+      const headers = isFuncionario
+        ? { "x-estabelecimento-id": user?.estabelecimentoId }
+        : { "x-usuario-id": user?.id };
+
+      const res = await fetch("http://10.0.2.2:5500/estabelecimento/perfil", { headers });
       if (res.ok) {
         const dados = await res.json();
         setLoja(dados);
@@ -79,15 +83,20 @@ export default function PainelLoja() {
 
       <View style={styles.headerRow}>
         <View>
-          <Text style={styles.bemVindo}>Bem-vindo!</Text>
+          <Text style={styles.bemVindo}>
+            {isFuncionario ? "Funcionário" : "Bem-vindo!"}
+          </Text>
           <Text style={styles.titulo}>Sua Loja</Text>
         </View>
-        <TouchableOpacity style={styles.salvarBtn} onPress={salvar} disabled={salvando}>
-          {salvando
-            ? <ActivityIndicator size="small" color="#fff" />
-            : <Text style={styles.salvarBtnTexto}>SALVAR</Text>
-          }
-        </TouchableOpacity>
+        {/* Botão salvar só aparece pro dono */}
+        {!isFuncionario && (
+          <TouchableOpacity style={styles.salvarBtn} onPress={salvar} disabled={salvando}>
+            {salvando
+              ? <ActivityIndicator size="small" color="#fff" />
+              : <Text style={styles.salvarBtnTexto}>SALVAR</Text>
+            }
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={styles.lojaCard}>
@@ -95,41 +104,48 @@ export default function PainelLoja() {
           <Feather name="shopping-bag" size={36} color="#F05A28" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.lojaNome}><Text style={{ fontWeight: "bold" }}>Nome: </Text>{loja?.nome || "—"}</Text>
+          <Text style={styles.lojaNome}>
+            <Text style={{ fontWeight: "bold" }}>Nome: </Text>{loja?.nome || "—"}
+          </Text>
           <Text style={styles.lojaNome}><Text style={{ fontWeight: "bold" }}>Total de Pedidos</Text></Text>
           <Text style={styles.lojaPedidos}>{loja?.totalPedidos || 0}</Text>
         </View>
         <View style={styles.dot} />
       </View>
 
-      <Text style={styles.label}>Nome</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Digite o nome cadastrado"
-        placeholderTextColor="#aaa"
-        value={nome}
-        onChangeText={setNome}
-      />
+      {/* Campos de edição — apenas para o dono */}
+      {!isFuncionario && (
+        <>
+          <Text style={styles.label}>Nome</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Digite o nome cadastrado"
+            placeholderTextColor="#aaa"
+            value={nome}
+            onChangeText={setNome}
+          />
 
-      <Text style={styles.label}>Descrição</Text>
-      <TextInput
-        style={[styles.input, styles.inputMultiline]}
-        placeholder="Coloque sua descrição"
-        placeholderTextColor="#aaa"
-        value={descricao}
-        onChangeText={setDescricao}
-        multiline
-        numberOfLines={4}
-      />
+          <Text style={styles.label}>Descrição</Text>
+          <TextInput
+            style={[styles.input, styles.inputMultiline]}
+            placeholder="Coloque sua descrição"
+            placeholderTextColor="#aaa"
+            value={descricao}
+            onChangeText={setDescricao}
+            multiline
+            numberOfLines={4}
+          />
 
-      <Text style={styles.label}>Endereço</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Digite o endereço da sua loja"
-        placeholderTextColor="#aaa"
-        value={endereco}
-        onChangeText={setEndereco}
-      />
+          <Text style={styles.label}>Endereço</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Digite o endereço da sua loja"
+            placeholderTextColor="#aaa"
+            value={endereco}
+            onChangeText={setEndereco}
+          />
+        </>
+      )}
 
       <TouchableOpacity
         style={styles.menuBtn}

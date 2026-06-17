@@ -42,7 +42,7 @@ export default function Login() {
       const data = await response.json();
 
       if (response.ok) {
-        login({ id: data.id, nome: data.nome, cargo: data.cargo, token: data.token });
+        login({ id: data.id, nome: data.nome, cargo: data.cargo, token: data.token, estabelecimentoId: data.estabelecimentoId });
 
         Notification.show({
           type: 'success',

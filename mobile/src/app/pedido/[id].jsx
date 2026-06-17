@@ -7,12 +7,14 @@ const ETAPAS = [
   { status: "Pendente", label: "Pedido recebido", icone: "clock" },
   { status: "Preparando", label: "Seu pedido está sendo separado", icone: "package" },
   { status: "Pronto", label: "Pronto para retirada", icone: "check-circle" },
+  { status: "Retirado", label: "Pedido Retirado!", icone: "shopping-bag"},
 ];
 
 function statusParaEtapa(status) {
   if (status === "Pendente") return 0;
   if (status === "Preparando") return 1;
-  if (status === "Pronto" || status === "Entregue") return 2;
+  if (status === "Pronto") return 2;
+  if (status === "Retirado" || status === "Entergue") return 3;
   return 0;
 }
 

@@ -34,6 +34,8 @@ export default function Pedidos() {
   const statusCor = (status) => {
     if (status === "Pendente") return "#F59E0B";
     if (status === "Pronto") return "#10B981";
+    if (status === "Pronto") return "#10B981";
+    if (status === "Retirado") return "#6B7280";
     return "#9CA3AF";
   };
 
@@ -43,6 +45,23 @@ export default function Pedidos() {
         <ActivityIndicator size="large" color="#F05A28" />
       </View>
     );
+  }
+
+  async function confirmarRetirada(pedidoId) {
+    try {
+      const res = await fetch(`http://10.0.2.2:5500/pedidos/${pedidoId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "Retirado" }),
+      });
+      if (res.ok) {
+        setPedidos(prev =>
+          prev.map(p => p._id === pedidoId ? { ...p, status: "Retirado" } : p)
+        );
+      }
+    } catch (err) {
+      console.error("Erro ao confirmar retirada:", err);
+    }
   }
 
   return (
@@ -94,6 +113,10 @@ export default function Pedidos() {
                 </Text>
                 <Text style={styles.total}>R$ {pedido.total.toFixed(2)}</Text>
               </View>
+              {pedido.status === "Pronto" && (
+                <TouchableOpacity>
+                </TouchableOpacity>
+              )}
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -125,4 +148,19 @@ const styles = StyleSheet.create({
   emptySubtitle: { fontSize: 15, color: "#666", textAlign: "center", lineHeight: 22 },
   button: { backgroundColor: "#F05A28", paddingVertical: 14, paddingHorizontal: 32, borderRadius: 999, marginTop: 8 },
   buttonText: { color: "#fff", fontWeight: "bold", fontSize: 15 },
+  btnRetirada: {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 8,
+  backgroundColor: "#10B981",
+  borderRadius: 12,
+  paddingVertical: 12,
+  marginTop: 12,
+},
+btnRetiradaTexto: {
+  color: "#fff",
+  fontWeight: "700",
+  fontSize: 14,
+},
 });

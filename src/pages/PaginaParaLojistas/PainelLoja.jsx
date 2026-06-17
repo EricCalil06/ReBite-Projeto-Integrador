@@ -542,31 +542,50 @@ function PainelLoja() {
             )}
 
             {/* PRONTOS */}
-            <h2 className="font-bold text-gray-800 text-lg mt-2">Prontos para Retirada</h2>
-            {pedidos.filter(p => p.status === "Pronto").length === 0 ? (
-              <p className="text-gray-400 text-sm italic">Nenhum pedido pronto.</p>
-            ) : (
-              pedidos.filter(p => p.status === "Pronto").map(pedido => (
-                <div key={pedido._id} className="p-5 bg-white border border-green-100 rounded-2xl shadow-sm flex justify-between items-center gap-4">
+            {pedidos.filter(p => p.status === "Pronto").map(pedido => (
+              <div key={pedido._id} className="p-5 bg-white border border-green-100 rounded-2xl shadow-sm flex justify-between items-center gap-4">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-gray-400">ID: #{pedido._id.slice(-6).toUpperCase()}</span>
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-50 text-green-600">Pronto</span>
+                  </div>
+                  <div className="text-sm text-gray-700 font-medium mt-2">
+                    {pedido.itens.map(item => `${item.quantidade}x ${item.nome}`).join(", ")}
+                  </div>
+                  <span className="text-xs text-gray-400 block mt-1">
+                    {new Date(pedido.createdAt).toLocaleDateString("pt-BR")} às{" "}
+                    {new Date(pedido.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                </div>
+                <div className="text-right flex flex-col gap-2 items-end">
+                  <span className="text-base font-bold text-gray-800">R$ {pedido.total.toFixed(2)}</span>
+                  {/* BOTÃO NOVO */}
+                  <button
+                    onClick={() => atualizarStatus(pedido._id, "Retirado")}
+                    className="bg-gray-600 text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-gray-700 transition-colors"
+                  >
+                    ✓ Confirmar Retirada
+                  </button>
+                </div>
+              </div>
+            ))}
+            {/* RETIRADOS - opcional, colapsável */}
+            <details className="mt-4">
+              <summary className="cursor-pointer text-sm text-gray-400 font-semibold">
+                Ver pedidos retirados ({pedidos.filter(p => p.status === "Retirado").length})
+              </summary>
+              {pedidos.filter(p => p.status === "Retirado").map(pedido => (
+                <div key={pedido._id} className="p-4 bg-gray-50 border border-gray-100 rounded-2xl mt-2 flex justify-between items-center opacity-60">
                   <div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs font-bold text-gray-400">ID: #{pedido._id.slice(-6).toUpperCase()}</span>
-                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-50 text-green-600">Pronto</span>
-                    </div>
-                    <div className="text-sm text-gray-700 font-medium mt-2">
+                    <span className="text-xs font-bold text-gray-400">ID: #{pedido._id.slice(-6).toUpperCase()}</span>
+                    <div className="text-sm text-gray-600 mt-1">
                       {pedido.itens.map(item => `${item.quantidade}x ${item.nome}`).join(", ")}
                     </div>
-                    <span className="text-xs text-gray-400 block mt-1">
-                      {new Date(pedido.createdAt).toLocaleDateString("pt-BR")} às{" "}
-                      {new Date(pedido.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                    </span>
                   </div>
-                  <div className="text-right">
-                    <span className="text-base font-bold text-gray-800">R$ {pedido.total.toFixed(2)}</span>
-                  </div>
+                  <span className="text-sm font-bold text-gray-500">R$ {pedido.total.toFixed(2)}</span>
                 </div>
-              ))
-            )}
+              ))}
+            </details>
           </div>
         )}
 

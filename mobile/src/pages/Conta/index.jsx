@@ -139,7 +139,7 @@ export default function Conta() {
       <Text style={styles.sectionTitle}>Configurações</Text>
 
       <View style={styles.configList}>
-        <TouchableOpacity style={styles.configItem}>
+        <TouchableOpacity style={styles.configItem} onPress={() => router.push("/alterar-senha")}>
           <Feather name="shield" size={22} color="#111" />
           <Text style={styles.configText}>Segurança e Privacidade</Text>
         </TouchableOpacity>

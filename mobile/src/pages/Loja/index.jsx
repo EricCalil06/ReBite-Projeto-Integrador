@@ -4,6 +4,7 @@ import {
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router"; 
+import { useCarrinho } from "../../context/CarrinhoContext";
 
 const { width } = Dimensions.get("window");
 
@@ -27,6 +28,7 @@ function calcularDesconto(preco, precoOriginal) {
 
 export default function LojaScreen() {
   const { id } = useLocalSearchParams(); 
+  const { adicionarItem, itens} = useCarrinho();
   const [aba, setAba] = useState("catalogo");
   const [loja, setLoja] = useState(null);
   const [categoriasProdutos, setCategoriasProdutos] = useState([]);
@@ -67,7 +69,21 @@ export default function LojaScreen() {
     buscarDadosDaLoja();
   }, [id]);
 
-  if (carregando) {
+  function adicionarAoCarrinho(item, e) {
+    e.stopPropagation();
+    adicionarItem({
+      id: item.id || item._id,
+      nome: item.nome,
+      preco: item.preco,
+      precoOriginal: item.precoOriginal,
+      unidade: item.unidade || "un",
+      estabelecimentoId: id, 
+      loja: loja?.nome,
+      endereco: loja?.endereco,
+    });
+  }
+
+if (carregando) {
     return (
       <View style={[styles.screen, { justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color="#F05A28" />
@@ -87,123 +103,147 @@ export default function LojaScreen() {
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.imagemContainer}>
-        <Image source={imagemLojaPadrao} style={styles.imagemLoja} resizeMode="cover" />
-        <TouchableOpacity style={styles.voltar} onPress={() => router.back()}>
-          <Feather name="arrow-left" size={20} color="#111" />
-        </TouchableOpacity>
-      </View>
+    <View style={{ flex: 1 }}>
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        <View style={styles.imagemContainer}>
+          <Image source={imagemLojaPadrao} style={styles.imagemLoja} resizeMode="cover" />
+          <TouchableOpacity style={styles.voltar} onPress={() => router.back()}>
+            <Feather name="arrow-left" size={20} color="#111" />
+          </TouchableOpacity>
+        </View>
 
-      <View style={styles.info}>
-        <Text style={styles.nome}>{loja.nome}</Text>
-        <Text style={styles.descricao}>{loja.descricao}</Text>
-        <Text style={styles.endereco}>
-          <Text style={styles.enderecoLabel}>Endereço: </Text>
-          {loja.endereco}
-        </Text>
-        <View style={styles.avaliacaoRow}>
-          <Text style={styles.avaliacaoLabel}>Avaliações: </Text>
-          <Estrelas quantidade={loja.avaliacao} />
-          <Text style={styles.reviews}>({loja.reviews})</Text>
-          <View style={styles.distanciaRow}>
-            <Feather name="map-pin" size={12} color="#F05A28" />
-            <Text style={styles.distancia}>{loja.distancia}</Text>
+        <View style={styles.info}>
+          <Text style={styles.nome}>{loja.nome}</Text>
+          <Text style={styles.descricao}>{loja.descricao}</Text>
+          <Text style={styles.endereco}>
+            <Text style={styles.enderecoLabel}>Endereço: </Text>
+            {loja.endereco}
+          </Text>
+          <View style={styles.avaliacaoRow}>
+            <Text style={styles.avaliacaoLabel}>Avaliações: </Text>
+            <Estrelas quantidade={loja.avaliacao} />
+            <Text style={styles.reviews}>({loja.reviews})</Text>
+            <View style={styles.distanciaRow}>
+              <Feather name="map-pin" size={12} color="#F05A28" />
+              <Text style={styles.distancia}>{loja.distancia}</Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      <View style={styles.abas}>
-        <TouchableOpacity style={styles.aba} onPress={() => setAba("catalogo")}>
-          <Text style={[styles.abaTexto, aba === "catalogo" && styles.abaAtiva]}>Catálogo</Text>
-          {aba === "catalogo" && <View style={styles.abaIndicador} />}
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.aba} onPress={() => setAba("sacolas")}>
-          <Text style={[styles.abaTexto, aba === "sacolas" && styles.abaAtiva]}>Sacolas Surpresas</Text>
-          {aba === "sacolas" && <View style={styles.abaIndicador} />}
-        </TouchableOpacity>
-      </View>
+        <View style={styles.abas}>
+          <TouchableOpacity style={styles.aba} onPress={() => setAba("catalogo")}>
+            <Text style={[styles.abaTexto, aba === "catalogo" && styles.abaAtiva]}>Catálogo</Text>
+            {aba === "catalogo" && <View style={styles.abaIndicador} />}
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.aba} onPress={() => setAba("sacolas")}>
+            <Text style={[styles.abaTexto, aba === "sacolas" && styles.abaAtiva]}>Sacolas Surpresas</Text>
+            {aba === "sacolas" && <View style={styles.abaIndicador} />}
+          </TouchableOpacity>
+        </View>
 
-      {aba === "catalogo" && (
-        <View style={styles.catalogoContainer}>
-          {categoriasProdutos.length === 0 ? (
-            <Text style={styles.avisoVazio}>Nenhum produto cadastrado nesta loja.</Text>
-          ) : (
-            categoriasProdutos.map((cat, index) => (
-              <View key={index} style={styles.categoriaSection}>
-                <Text style={styles.categoriaTitulo}>{cat.categoria}</Text>
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={false} 
-                  contentContainerStyle={styles.scrollHorizontal}
-                >
-                  {cat.produtos.map((produto) => (
-                    <TouchableOpacity
-                      key={produto.id || produto._id}
-                      style={styles.produtoCardHorizontal}
-                      onPress={() => router.push(`/produto/${produto.id || produto._id}`)}
-                    >
-                      <View style={styles.produtoImagemHorizontal}>
-                        {produto.imagem ? (
-                          <Image source={{ uri: produto.imagem }} style={styles.imagemProdutoHorizontal} resizeMode="contain" />
-                        ) : (
-                          <Image source={imagemLeite} style={styles.imagemProdutoHorizontal} resizeMode="contain" />
-                        )}
-                        <TouchableOpacity style={styles.botaoAdicionarHorizontal}>
-                          <Text style={styles.plusSign}>+</Text>
-                        </TouchableOpacity>
-                      </View>
-                      <Text style={styles.produtoPrecoVerde}>R$ {produto.preco.toFixed(2)} / {produto.unidade || "un"}</Text>
-                      <View style={styles.descontoRow}>
-                        <Text style={styles.produtoPrecoRiscado}>R$ {produto.precoOriginal.toFixed(2)}</Text>
-                        <View style={styles.badgeLaranja}>
-                          <Text style={styles.textoBadgeLaranja}>-{calcularDesconto(produto.preco, produto.precoOriginal)}%</Text>
+        {aba === "catalogo" && (
+          <View style={styles.catalogoContainer}>
+            {categoriasProdutos.length === 0 ? (
+              <Text style={styles.avisoVazio}>Nenhum produto cadastrado nesta loja.</Text>
+            ) : (
+              categoriasProdutos.map((cat, index) => (
+                <View key={index} style={styles.categoriaSection}>
+                  <Text style={styles.categoriaTitulo}>{cat.categoria}</Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.scrollHorizontal}
+                  >
+                    {cat.produtos.map((produto) => (
+                      <TouchableOpacity
+                        key={produto.id || produto._id}
+                        style={styles.produtoCardHorizontal}
+                        onPress={() => router.push(`/produto/${produto.id || produto._id}`)}
+                      >
+                        <View style={styles.produtoImagemHorizontal}>
+                          {produto.imagem ? (
+                            <Image source={{ uri: produto.imagem }} style={styles.imagemProdutoHorizontal} resizeMode="contain" />
+                          ) : (
+                            <Image source={imagemLeite} style={styles.imagemProdutoHorizontal} resizeMode="contain" />
+                          )}
+                          <TouchableOpacity
+                            style={styles.botaoAdicionarHorizontal}
+                            onPress={(e) => adicionarAoCarrinho(produto, e)}
+                          >
+                            <Text style={styles.plusSign}>+</Text>
+                          </TouchableOpacity>
                         </View>
-                      </View>
-                      <Text style={styles.produtoNomeFino} numberOfLines={2}>{produto.nome}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            ))
-          )}
-        </View>
-      )}
+                        <Text style={styles.produtoPrecoVerde}>R$ {produto.preco.toFixed(2)} / {produto.unidade || "un"}</Text>
+                        <View style={styles.descontoRow}>
+                          <Text style={styles.produtoPrecoRiscado}>R$ {produto.precoOriginal.toFixed(2)}</Text>
+                          <View style={styles.badgeLaranja}>
+                            <Text style={styles.textoBadgeLaranja}>-{calcularDesconto(produto.preco, produto.precoOriginal)}%</Text>
+                          </View>
+                        </View>
+                        <Text style={styles.produtoNomeFino} numberOfLines={2}>{produto.nome}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              ))
+            )}
+          </View>
+        )}
 
-      {aba === "sacolas" && (
-        <View style={styles.grid}>
-          {sacolas.length === 0 ? (
-            <Text style={styles.avisoVazio}>Nenhuma sacola disponível no momento.</Text>
-          ) : (
-            sacolas.map((sacola) => (
-              <TouchableOpacity
-                key={sacola.id || sacola._id}
-                style={styles.produtoCard}
-                onPress={() => router.push(`/produto/${sacola.id || sacola._id}`)}
-              >
-                <View style={styles.produtoImagem}>
-                  {sacola.imagem && (
-                    <Image source={{ uri: sacola.imagem }} style={styles.imagemProduto} resizeMode="contain" />
-                  )}
-                  <TouchableOpacity style={styles.botaoAdicionar}>
-                    <Feather name="plus" size={20} color="#fff" />
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.precoRow}>
-                  <Text style={styles.produtoPreco}>R$ {sacola.preco.toFixed(2)} / {sacola.unidade || "1un"}</Text>
-                  <View style={styles.descontoBadge}>
-                    <Text style={styles.descontoTexto}>-{calcularDesconto(sacola.preco, sacola.precoOriginal)}%</Text>
+        {aba === "sacolas" && (
+          <View style={styles.grid}>
+            {sacolas.length === 0 ? (
+              <Text style={styles.avisoVazio}>Nenhuma sacola disponível no momento.</Text>
+            ) : (
+              sacolas.map((sacola) => (
+                <TouchableOpacity
+                  key={sacola.id || sacola._id}
+                  style={styles.produtoCard}
+                  onPress={() => router.push(`/produto/${sacola.id || sacola._id}`)}
+                >
+                  <View style={styles.produtoImagem}>
+                    {sacola.imagem && (
+                      <Image source={{ uri: sacola.imagem }} style={styles.imagemProduto} resizeMode="contain" />
+                    )}
+                    <TouchableOpacity
+                      style={styles.botaoAdicionar}
+                      onPress={(e) => adicionarAoCarrinho(sacola, e)}
+                    >
+                      <Feather name="plus" size={20} color="#fff" />
+                    </TouchableOpacity>
                   </View>
-                </View>
-                <Text style={styles.produtoPrecoOriginal}>R$ {sacola.precoOriginal.toFixed(2)}</Text>
-                <Text style={styles.produtoNome}>{sacola.nome}</Text>
-                <Text style={styles.sacolaCategoria}>{sacola.categoria}</Text>
-              </TouchableOpacity>
-            ))
-          )}
-        </View>
+                  <View style={styles.precoRow}>
+                    <Text style={styles.produtoPreco}>R$ {sacola.preco.toFixed(2)} / {sacola.unidade || "1un"}</Text>
+                    <View style={styles.descontoBadge}>
+                      <Text style={styles.descontoTexto}>-{calcularDesconto(sacola.preco, sacola.precoOriginal)}%</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.produtoPrecoOriginal}>R$ {sacola.precoOriginal.toFixed(2)}</Text>
+                  <Text style={styles.produtoNome}>{sacola.nome}</Text>
+                  <Text style={styles.sacolaCategoria}>{sacola.categoria}</Text>
+                </TouchableOpacity>
+              ))
+            )}
+          </View>
+        )}
+      </ScrollView>
+
+      {/* BOTÃO FLUTUANTE DO CARRINHO */}
+      {itens.length > 0 && (
+        <TouchableOpacity
+          style={styles.botaoFlutuante}
+          onPress={() => router.push("/carrinho")}
+        >
+          <Feather name="shopping-cart" size={20} color="#fff" />
+          <Text style={styles.botaoFlutuanteTexto}>
+            Ver carrinho ({itens.length} {itens.length === 1 ? "item" : "itens"})
+          </Text>
+          <Text style={styles.botaoFlutuantePreco}>
+            R$ {itens.reduce((acc, i) => acc + i.preco, 0).toFixed(2)}
+          </Text>
+        </TouchableOpacity>
       )}
-    </ScrollView>
+    </View>
   );
 }
 
@@ -257,5 +297,36 @@ const styles = StyleSheet.create({
   produtoPrecoOriginal: { fontSize: 12, color: "#aaa", textDecorationLine: "line-through" },
   produtoNome: { fontSize: 12, color: "#555" },
   sacolaCategoria: { fontSize: 12, color: "#F05A28", fontWeight: "700" },
-  avisoVazio: { paddingHorizontal: 20, fontSize: 14, color: "#888", fontStyle: "italic" }
+  avisoVazio: { paddingHorizontal: 20, fontSize: 14, color: "#888", fontStyle: "italic" },
+
+  botaoFlutuante: {
+  position: "absolute",
+  bottom: 96,
+  left: 20,
+  right: 20,
+  backgroundColor: "#F05A28",
+  borderRadius: 16,
+  paddingVertical: 14,
+  paddingHorizontal: 20,
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  elevation: 8,
+  shadowColor: "#F05A28",
+  shadowOpacity: 0.4,
+  shadowRadius: 12,
+  shadowOffset: { width: 0, height: 4 },
+},
+botaoFlutuanteTexto: {
+  color: "#fff",
+  fontWeight: "700",
+  fontSize: 15,
+  flex: 1,
+  marginLeft: 10,
+},
+botaoFlutuantePreco: {
+  color: "#fff",
+  fontWeight: "900",
+  fontSize: 15,
+},
 });
