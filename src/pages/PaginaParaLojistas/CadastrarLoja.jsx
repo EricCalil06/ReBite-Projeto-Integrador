@@ -26,7 +26,7 @@ function CadastrarLoja() {
 
       if (response.ok) {
         setUser((prev) => ({ ...prev, cargo: "admin" }));
-        navigate("/painel-loja");
+        setMostrarSucesso(true);
       } else {
         alert("Houve um problema ao salvar os dados da sua loja.");
       }
@@ -100,6 +100,12 @@ function CadastrarLoja() {
           </button>
         </form>
       </div>
+      {mostrarSucesso && (
+        <SuccessModal
+          mensagem="Loja cadastrada com sucesso!"
+          aoFechar={() => navigate("/painel-loja")}
+        />
+      )}
     </div>
   );
 }

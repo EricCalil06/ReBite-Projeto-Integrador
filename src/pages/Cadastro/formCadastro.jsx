@@ -2,10 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import loginImage from "../../assets/loginImage.png";
 import logoReBiteH from "../../assets/logoReBiteH.png";
+import SuccessModal from "../../components/SuccessModal";
 
 function FormCadastro({ step, goToNextStep }) {
   const navigate = useNavigate();
   const [aceitouTermos, setAceitouTermos] = useState(false);
+  const [mostrarSucesso, setMostrarSucesso] = useState(false);
 
   const [formData, setFormData] = useState({
     nome: "",
@@ -99,7 +101,7 @@ function FormCadastro({ step, goToNextStep }) {
       });
 
       if (response.ok) {
-        navigate("/login");
+        setMostrarSucesso(true);
       } else {
         const errorData = await response.json();
         console.error("Erro no cadastro:", errorData.error);
@@ -326,6 +328,12 @@ function FormCadastro({ step, goToNextStep }) {
           </form>
         </div>
       </div>
+      {mostrarSucesso && (
+        <SuccessModal
+          mensagem="Conta criada com sucesso!"
+          aoFechar={() => navigate("/login")}
+        />
+      )}
     </div>
   );
 }
