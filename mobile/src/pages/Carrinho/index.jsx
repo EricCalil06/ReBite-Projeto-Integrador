@@ -110,21 +110,23 @@ export default function CarrinhoScreen() {
             </View>
 
             {itens.map((item, index) => (
-              <TouchableOpacity key={index} onLongPress={() => removerItem(index)}>
-                <View style={styles.itemRow}>
-                  <View style={styles.itemImagem}>
-                    <Feather name="package" size={20} color="#F05A28" />
-                  </View>
-                  <View style={styles.itemInfo}>
-                    <Text style={styles.itemNome}>{item.nome}</Text>
-                    <Text style={styles.itemQtd}>1 Unidade</Text>
-                  </View>
-                  <View style={styles.itemPrecos}>
-                    <Text style={styles.itemPreco}>R$ {item.preco.toFixed(2)} / {item.unidade}</Text>
-                    <Text style={styles.itemPrecoOriginal}>R$ {(item.precoOriginal || item.preco * 1.2).toFixed(2)}</Text>
-                  </View>
+              <View key={index} style={styles.itemRow}>
+                <View style={styles.itemImagem}>
+                  <Feather name="package" size={20} color="#F05A28" />
                 </View>
-              </TouchableOpacity>
+                <View style={styles.itemInfo}>
+                  <Text style={styles.itemNome}>{item.nome}</Text>
+                  <Text style={styles.itemQtd}>1 Unidade</Text>
+                </View>
+                <View style={styles.itemPrecos}>
+                  <Text style={styles.itemPreco}>R$ {item.preco.toFixed(2)} / {item.unidade}</Text>
+                  <Text style={styles.itemPrecoOriginal}>R$ {(item.precoOriginal || item.preco * 1.2).toFixed(2)}</Text>
+                </View>
+                {/* Botão remover */}
+                <TouchableOpacity onPress={() => removerItem(index)} style={{ padding: 6 }}>
+                  <Feather name="trash-2" size={18} color="#aaa" />
+                </TouchableOpacity>
+              </View>
             ))}
           </View>
         )}
