@@ -2,6 +2,7 @@ import { useState, useContext, useEffect } from "react";
 import { Link } from "react-router-dom";
 import logoReBiteH from "../assets/logoReBiteH.png";
 import { AuthContext } from "/src/context/AuthContext.jsx";
+import { User } from "lucide-react";
 
 function NavBar() {
   const { user, logout } = useContext(AuthContext);
@@ -64,7 +65,7 @@ function NavBar() {
             <img
               src={logoReBiteH}
               alt="Logo ReBite"
-              className="w-32 object-contain"
+              className="w-32 object-contain -mt-1 -translate-y-1.5"
             />
           </Link>
           <div className="hidden md:flex gap-4 items-center">
@@ -73,7 +74,7 @@ function NavBar() {
             
             {user && (
               <Link 
-                to="/cadastrar-loja" 
+                to="/cadastro-lojista" 
                 className="hover:text-[#F55D22] transition-colors"
               >
                 Cadastrar uma Loja
@@ -152,8 +153,8 @@ function NavBar() {
               <span className="font-bold text-gray-800">{user.nome}</span>
 
               <Link to="/conta" title="Acessar minha conta">
-                <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 font-bold border-2 border-white shadow-sm hover:ring-2 hover:ring-[#F55D22] transition-all cursor-pointer">
-                  {user?.nome ? user.nome.charAt(0).toUpperCase() : "?"}
+                <div className="w-10 h-10 rounded-full bg-orange-200 flex items-center justify-center">
+                  <User className="text-black" />
                 </div>
               </Link>
 

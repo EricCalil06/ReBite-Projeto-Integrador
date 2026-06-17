@@ -11,9 +11,9 @@ function FormCadastro({ step, goToNextStep }) {
     nome: "",
     dataNascimento: "",
     email: "",
-    senha: "", 
+    senha: "",
     telefone: "",
-    cpfCnpj: ""
+    cpfCnpj: "",
   });
 
   const handleChange = (e) => {
@@ -39,6 +39,33 @@ function FormCadastro({ step, goToNextStep }) {
       [name]: value,
     }));
   };
+
+  function mascaraTelefone(valor) {
+    const nums = valor.replace(/\D/g, "").slice(0, 11);
+    if (nums.length <= 10) {
+      return nums
+        .replace(/^(\d{2})(\d)/, "($1) $2")
+        .replace(/(\d{4})(\d)/, "$1-$2");
+    }
+    return nums
+      .replace(/^(\d{2})(\d)/, "($1) $2")
+      .replace(/(\d{5})(\d)/, "$1-$2");
+  }
+
+  function mascaraCpfCnpj(valor) {
+    const nums = valor.replace(/\D/g, "").slice(0, 14);
+    if (nums.length <= 11) {
+      return nums
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    }
+    return nums
+      .replace(/^(\d{2})(\d)/, "$1.$2")
+      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d)/, ".$1/$2")
+      .replace(/(\d{4})(\d)/, "$1-$2");
+  }
 
   const handleFinalize = async () => {
     if (!aceitouTermos) {
@@ -172,7 +199,12 @@ function FormCadastro({ step, goToNextStep }) {
                     type="tel"
                     name="telefone"
                     value={formData.telefone}
-                    onChange={handleChange}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        telefone: mascaraTelefone(e.target.value),
+                      }))
+                    }
                     placeholder="(11) 99999-9999"
                     className="w-full px-5 py-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F55D22]"
                   />
@@ -185,9 +217,13 @@ function FormCadastro({ step, goToNextStep }) {
                     type="text"
                     name="cpfCnpj"
                     value={formData.cpfCnpj}
-                    onChange={handleChange}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        cpfCnpj: mascaraCpfCnpj(e.target.value),
+                      }))
+                    }
                     placeholder="Apenas números"
-                    maxLength={14}
                     className="w-full px-5 py-3 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F55D22]"
                   />
                 </div>
@@ -212,7 +248,8 @@ function FormCadastro({ step, goToNextStep }) {
 
                   {/* ADICIONADO: Ocultação visual da senha na listagem final por segurança */}
                   <p className="text-sm text-gray-600">
-                    <strong>Senha:</strong> {"•".repeat(formData.senha.length || 6)}
+                    <strong>Senha:</strong>{" "}
+                    {"•".repeat(formData.senha.length || 6)}
                   </p>
 
                   <p className="text-sm text-gray-600">

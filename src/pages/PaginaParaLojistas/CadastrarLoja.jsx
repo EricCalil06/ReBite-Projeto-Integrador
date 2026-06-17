@@ -45,7 +45,7 @@ function CadastrarLoja() {
           Configure seu Estabelecimento
         </h2>
         <p className="text-gray-500 text-sm text-center mb-8">
-          Identificamos que seu perfil de Administrador ainda não possui uma loja ativa vinculada.
+          Identificamos que seu perfil ainda não possui uma loja ativa vinculada.
         </p>
 
         <form onSubmit={handleCadastroLoja} className="flex flex-col gap-6">

@@ -122,10 +122,9 @@ export default function Conta() {
           <Text style={styles.congrats}>Parabéns! Você economizou até agora:</Text>
           <Text style={styles.kg}>{kgSalvos}kg de Alimento</Text>
         </View>
-        <Image
-          source={{ uri: "https://i.pravatar.cc/100" }}
-          style={styles.avatar}
-        />
+        <View style={styles.avatar}>
+          <Feather name="user" size={32} color="#000" />
+        </View>
       </View>
 
       {mostrarBotao && (
@@ -199,7 +198,14 @@ const styles = StyleSheet.create({
   username: { fontSize: 28, fontWeight: "bold", color: "#111" },
   congrats: { fontSize: 13, color: "#555", marginTop: 4 },
   kg: { fontSize: 18, fontWeight: "bold", color: "#F05A28", marginTop: 2 },
-  avatar: { width: 72, height: 72, borderRadius: 36 },
+  avatar: {
+    width: 72,
+    height: 72,
+    borderRadius: 999,
+    backgroundColor: "#FDDED3",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   ctaButton: { backgroundColor: "#F05A28", borderRadius: 12, paddingVertical: 16, alignItems: "center", marginBottom: 28 },
   ctaButtonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
   sectionTitle: { fontSize: 18, fontWeight: "bold", color: "#111", marginBottom: 4 },

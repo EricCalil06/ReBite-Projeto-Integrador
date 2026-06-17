@@ -22,18 +22,15 @@ function MainSection() {
 
         <form action="">
           <div className="flex flex-col sm:flex-row gap-4">
-            <input
-              type="email"
-              placeholder="Digite seu e-mail"
-              className="rounded-xl pl-4 bg-white border border-gray-300 placeholder:text-gray-500
-               text-gray-900 focus:ring-orange-500 focus:border-orange-500"
-            />
-            
             <button
               type="submit"
               className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-xl transition-colors"
+              onClick={(e) => {
+                e.preventDefault();
+                window.location.href = "/cadastrar-loja";
+              }}
             >
-              Cadastrar e-mail
+              Quero ser um lojista parceiro
             </button>
           </div>
         </form>

@@ -60,7 +60,7 @@ function Login() {
         } else if (data.cargo === "funcionario") {
           navigate("/");
         } else {
-          navigate("/pagina-cliente");
+          navigate("/");
         }
       } else {
         alert(data.mensagem || "Erro ao fazer login");

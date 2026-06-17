@@ -88,33 +88,8 @@ export default function Lojas() {
       ) : lojas.length === 0 ? (
         <Text style={styles.avisoVazio}>Nenhum estabelecimento encontrado.</Text>
       ) : (
-        <>
+        <><Text style={styles.secaoTitulo}>Lojas</Text>
           {lojas.slice(0, 10).map((loja) => (
-            <TouchableOpacity 
-              key={loja._id} 
-              style={styles.lojaItem}
-              onPress={() => router.push(`/loja/${loja._id}`)}
-            >
-              <View style={styles.lojaAvatar}>
-                <Feather name="shopping-bag" size={24} color="#F05A28" />
-              </View>
-              <View style={styles.lojaInfo}>
-                <Text style={styles.lojaNome}>{loja.nome}</Text>
-                <Estrelas quantidade={loja.avaliacao || 4} />
-                
-                <View style={styles.lojaDistanciaRow}>
-                  <Feather name="map-pin" size={12} color="#F05A28" />
-                  <Text style={styles.lojaDistancia} numberOfLines={1}>
-                    {loja.endereco ? loja.endereco.split(',')[0] : "Endereço não informado"}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
-
-          <Text style={styles.secaoTitulo}>Lojas</Text>
-
-          {lojas.slice(10).map((loja) => (
             <TouchableOpacity 
               key={loja._id} 
               style={styles.lojaItem}
@@ -167,6 +142,6 @@ const styles = StyleSheet.create({
   lojaDistanciaRow: { flexDirection: "row", alignItems: "center", gap: 4 },
   lojaDistancia: { fontSize: 12, color: "#666" },
 
-  secaoTitulo: { fontSize: 18, fontWeight: "bold", color: "#111", marginTop: 8, marginBottom: 4 },
+  secaoTitulo: { fontSize: 20, fontWeight: "bold", color: "#111", marginTop: 8, marginBottom: 4 },
   avisoVazio: { color: "#888", fontStyle: "italic", textAlign: "center", marginTop: 24, fontSize: 14 }
 });

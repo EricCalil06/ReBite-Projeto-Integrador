@@ -1,13 +1,19 @@
+import logoReBiteH from "../assets/logoReBiteH.png";
+
 function Footer() {
   return (
-    <footer className="bg-gray-900 text-gray-300 font-sans mt-auto w-full overflow-hidden">
+    <footer className="bg-neutral-950 text-gray-300 font-sans mt-auto w-full overflow-hidden">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 md:py-16">
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 md:gap-8 mb-12">
           
           <div className="sm:col-span-2 md:col-span-1">
             <h2 className="text-3xl font-bold text-white mb-4">
-              Re<span className="text-orange-500">Bite</span>
+              <img
+                            src={logoReBiteH}
+                            alt="Logo ReBite"
+                            className="w-32 object-contain -mt-1 -translate-y-1.5"
+                          />
             </h2>
             <p className="text-gray-400 text-sm leading-relaxed mb-6 max-w-sm md:max-w-none">
               Transformando desperdício em oportunidade. Conectamos lojistas a consumidores para um futuro mais sustentável e econômico.

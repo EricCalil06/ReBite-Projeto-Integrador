@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import logoReBiteH from "../../assets/logoReBiteH.png";
 
 function PainelLoja() {
   const [aba, setAba] = useState("pedidos");
@@ -33,10 +32,31 @@ function PainelLoja() {
   };
 
   function converterDataParaISO(dataBR) {
-  const [dia, mes, ano] = dataBR.split("/");
-  return new Date(`${ano}-${mes}-${dia}`).toISOString();
+    const [dia, mes, ano] = dataBR.split("/");
+    return new Date(`${ano}-${mes}-${dia}`).toISOString();
   }
-  
+
+  function mascaraData(valor) {
+  const nums = valor.replace(/\D/g, "").slice(0, 8);
+  return nums
+    .replace(/^(\d{2})(\d)/, "$1/$2")
+    .replace(/^(\d{2})\/(\d{2})(\d)/, "$1/$2/$3");
+  }
+
+  function mascaraInteiro(valor) {
+    return valor.replace(/\D/g, "");
+  }
+
+  function mascaraDecimal(valor) {
+    let limpo = valor.replace(/[^0-9.,]/g, "");
+    limpo = limpo.replace(",", ".");
+    const partes = limpo.split(".");
+    if (partes.length > 2) {
+      limpo = partes[0] + "." + partes.slice(1).join("");
+    }
+    return limpo;
+  }
+    
   async function carregarDados() {
     try {
       if (aba === "produtos") {
@@ -531,90 +551,94 @@ function PainelLoja() {
               className="bg-white p-6 rounded-2xl border h-fit flex flex-col gap-4"
             >
               <h2 className="font-bold text-gray-800 text-lg">
-                Adicionar Item ao Catálogo
-              </h2>
-              <input
-                type="text"
-                placeholder="Nome do Produto"
-                value={formProd.nome}
-                onChange={(e) =>
-                  setFormProd({ ...formProd, nome: e.target.value })
-                }
-                className="border p-2 rounded-xl"
-                required
-              />
-              <input
-                type="text"
-                placeholder="Descrição"
-                value={formProd.descricao}
-                onChange={(e) =>
-                  setFormProd({ ...formProd, descricao: e.target.value })
-                }
-                className="border p-2 rounded-xl"
-              />
+  Adicionar Item ao Catálogo
+</h2>
+<input
+  type="text"
+  placeholder="Nome do Produto"
+  value={formProd.nome}
+  onChange={(e) =>
+    setFormProd({ ...formProd, nome: e.target.value })
+  }
+  className="border p-2 rounded-xl"
+  required
+/>
+<input
+  type="text"
+  placeholder="Descrição"
+  value={formProd.descricao}
+  onChange={(e) =>
+    setFormProd({ ...formProd, descricao: e.target.value })
+  }
+  className="border p-2 rounded-xl"
+/>
 
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="number"
-                  placeholder="Preço"
-                  value={formProd.preco}
-                  onChange={(e) =>
-                    setFormProd({ ...formProd, preco: e.target.value })
-                  }
-                  className="border p-2 rounded-xl"
-                  required
-                />
-                <input
-                  type="number"
-                  placeholder="Qtd"
-                  value={formProd.quantidade}
-                  onChange={(e) =>
-                    setFormProd({ ...formProd, quantidade: e.target.value })
-                  }
-                  className="border p-2 rounded-xl"
-                  required
-                />
-              </div>
+<div className="grid grid-cols-2 gap-2">
+  <input
+    type="text"
+    inputMode="decimal"
+    placeholder="Preço"
+    value={formProd.preco}
+    onChange={(e) =>
+      setFormProd({ ...formProd, preco: mascaraDecimal(e.target.value) })
+    }
+    className="border p-2 rounded-xl"
+    required
+  />
+  <input
+    type="text"
+    inputMode="numeric"
+    placeholder="Qtd"
+    value={formProd.quantidade}
+    onChange={(e) =>
+      setFormProd({ ...formProd, quantidade: mascaraInteiro(e.target.value) })
+    }
+    className="border p-2 rounded-xl"
+    required
+  />
+</div>
 
-              <input
-                type="text"
-                placeholder="Validade (DD/MM/AAAA)"
-                value={formProd.validade}
-                onChange={(e) =>
-                  setFormProd({ ...formProd, validade: e.target.value })
-                }
-                className="border p-2 rounded-xl"
-                required
-              />
-              <input
-                type="text"
-                placeholder="Categoria (Ex: Padaria, Pet)"
-                value={formProd.categoria}
-                onChange={(e) =>
-                  setFormProd({ ...formProd, categoria: e.target.value })
-                }
-                className="border p-2 rounded-xl"
-                required
-              />
-              <input
-                type="text"
-                placeholder="Alertas Alérgicos"
-                value={formProd.alertasAlergicos}
-                onChange={(e) =>
-                  setFormProd({ ...formProd, alertasAlergicos: e.target.value })
-                }
-                className="border p-2 rounded-xl"
-              />
+<input
+  type="text"
+  inputMode="numeric"
+  placeholder="Validade (DD/MM/AAAA)"
+  value={formProd.validade}
+  onChange={(e) =>
+    setFormProd({ ...formProd, validade: mascaraData(e.target.value) })
+  }
+  className="border p-2 rounded-xl"
+  required
+/>
+<input
+  type="text"
+  placeholder="Categoria (Ex: Padaria, Pet)"
+  value={formProd.categoria}
+  onChange={(e) =>
+    setFormProd({ ...formProd, categoria: e.target.value })
+  }
+  className="border p-2 rounded-xl"
+  required
+/>
+<input
+  type="text"
+  placeholder="Alertas Alérgicos"
+  value={formProd.alertasAlergicos}
+  onChange={(e) =>
+    setFormProd({ ...formProd, alertasAlergicos: e.target.value })
+  }
+  className="border p-2 rounded-xl"
+/>
 
-              <input
-                type="number"
-                placeholder="Peso em kg (Ex: 0.5)"
-                value={formProd.peso}
-                onChange={e => setFormProd({ ...formProd, peso: e.target.value })}
-                className="border p-2 rounded-xl"
-                step="0.1"
-              />
-
+<input
+  type="text"
+  inputMode="decimal"
+  placeholder="Peso em kg (Ex: 0.5)"
+  value={formProd.peso}
+  onChange={(e) =>
+    setFormProd({ ...formProd, peso: mascaraDecimal(e.target.value) })
+  }
+  className="border p-2 rounded-xl"
+/>
               <select
                 value={formProd.tipo}
                 onChange={(e) =>

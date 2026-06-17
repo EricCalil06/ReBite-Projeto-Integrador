@@ -2,6 +2,7 @@ import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext.jsx";
 import { UserX, Shield, CreditCard, ChevronDown, LogOut } from "lucide-react";
+import { User } from "lucide-react";
 
 export default function Conta() {
   const [openFaq, setOpenFaq] = useState(null);
@@ -115,11 +116,9 @@ export default function Conta() {
         
         <div className="md:col-span-1 flex flex-col gap-6">
           <div className="bg-white rounded-[2rem] p-8 shadow-sm flex flex-col items-center text-center border border-gray-100">
-            <img
-              src="https://i.pravatar.cc/150"
-              alt="Avatar"
-              className="w-24 h-24 rounded-full mb-4 object-cover border-4 border-gray-50"
-            />
+            <div className="w-24 h-24 rounded-full bg-orange-200 flex items-center justify-center">
+              <User className="w-12 h-12 text-black" />
+            </div>
             <span className="text-sm text-gray-500 font-medium">Bem-vindo!</span>
             <h1 className="text-3xl font-bold text-gray-900 mb-6">{user.nome || "Usuário"}</h1>
             

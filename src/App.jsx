@@ -10,7 +10,6 @@ import PaginaLojista from "./pages/PaginaParaLojistas/index.jsx"
 import Sacola from './pages/PaginaParaLojistas/sacola'; 
 import CadastrarLoja from "./pages/PaginaParaLojistas/CadastrarLoja.jsx";
 import PainelLoja from "./pages/PaginaParaLojistas/PainelLoja.jsx";
-import PaginaCliente from "./pages/Cliente/paginaCliente.jsx";
 import Debug from "./pages/Debug/index.jsx"
 import Conta from "./pages/Conta/index.jsx";
 
@@ -35,8 +34,6 @@ function App() {
           <Route path="/cadastrar-loja" element={<CadastrarLoja />} />
 
           <Route path="/painel-loja" element={<PainelLoja />} />
-
-          <Route path="/pagina-cliente" element={<PaginaCliente />} />
 
           <Route path="/debug" element={<Debug />} />
 
