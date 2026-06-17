@@ -6,9 +6,10 @@ export function AuthProvider({ children }) {
 
   const login = (dadosUsuario) => setUser(dadosUsuario);
   const logout = () => setUser(null);
+  const atualizarUsuario = (dadosNovos) => setUser((prev) => ({ ...prev, ...dadosNovos }));
 
   return (
-    <AuthContext.Provider value={{ user, logado: !!user, login, logout }}>
+    <AuthContext.Provider value={{ user, logado: !!user, login, logout, atualizarUsuario }}>
       {children}
     </AuthContext.Provider>
   );

@@ -35,7 +35,7 @@ function Login() {
          nome: data.nome,
          id: data.id,
          cargo: data.cargo,
-         hasEstablishment: data.cargo === "admin"
+         //hasEstablishment: data.cargo === "admin"
        });
 
         if (data.cargo === "admin") {

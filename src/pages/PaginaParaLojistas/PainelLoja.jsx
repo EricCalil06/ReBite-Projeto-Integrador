@@ -32,8 +32,12 @@ function PainelLoja() {
   };
 
   function converterDataParaISO(dataBR) {
-    const [dia, mes, ano] = dataBR.split("/");
-    return new Date(`${ano}-${mes}-${dia}`).toISOString();
+    const partes = dataBR.split("/");
+    if (partes.length !== 3) return null;
+    const [dia, mes, ano] = partes;
+    const data = new Date(`${ano}-${mes}-${dia}`);
+    if (isNaN(data.getTime())) return null;
+    return data.toISOString();
   }
 
   function mascaraData(valor) {
@@ -153,24 +157,46 @@ function PainelLoja() {
 
   async function salvarProduto(e) {
     e.preventDefault();
-    await fetch("http://localhost:5500/produtos", {
-      method: "POST",
-      headers,
-      body: JSON.stringify(formProd),
-    });
-    setFormProd({
-      nome: "",
-      preco: "",
-      quantidade: "",
-      validade: "",
-      categoria: "",
-      tipo: "avulso",
-      alertasAlergicos: "",
-      descricao: "",
-      imagem: "",
-      validade: converterDataParaISO(formProd.validade),
-    });
-    carregarDados();
+    const validadeISO = converterDataParaISO(formProd.validade);
+    if (!validadeISO) {
+      alert("Data de validade inválida. Use o formato DD/MM/AAAA.");
+      return;
+    }
+    try {
+      const res = await fetch("http://localhost:5500/produtos", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          ...formProd,
+          preco: Number(formProd.preco),
+          quantidade: Number(formProd.quantidade),
+          peso: Number(formProd.peso) || 0,
+          validade: validadeISO,
+        }),
+      });
+
+      if (res.ok) {
+        setFormProd({
+          nome: "",
+          preco: "",
+          quantidade: "",
+          validade: "",
+          categoria: "",
+          tipo: "avulso",
+          alertasAlergicos: "",
+          descricao: "",
+          imagem: "",
+          peso: "",
+        });
+        carregarDados();
+      } else {
+        const erro = await res.json();
+        alert(erro.error || "Não foi possível cadastrar o produto.");
+      }
+    } catch (err) {
+      console.error("Erro ao cadastrar produto:", err);
+      alert("Erro ao conectar ao servidor.");
+    }
   }
 
   async function salvarFuncionario(e) {

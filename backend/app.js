@@ -393,12 +393,20 @@ app.post('/estabelecimento', async (req, res) => {
         }
 
         const Estabelecimento = obterModelEstabelecimento();
+        const jaExistia = await Estabelecimento.findOne({ donoId });
 
         const perfilLoja = await Estabelecimento.findOneAndUpdate(
             { donoId },
             { nome, descricao, endereco },
             { new: true, upsert: true }
         );
+
+        if (!jaExistia) {
+            await Usuario.findByIdAndUpdate(donoId, {
+                cargo: "admin",
+                estabelecimentoId: perfilLoja._id,
+            });
+        }
 
         res.status(200).json(perfilLoja);
     } catch (error) {
@@ -411,22 +419,25 @@ app.get('/estabelecimento/perfil', async (req, res) => {
     try {
         const estabelecimentoId = req.headers['x-estabelecimento-id'];
         const donoId = req.headers['x-usuario-id'];
-
         const Estabelecimento = obterModelEstabelecimento();
         let loja = null;
 
         if (estabelecimentoId) {
             loja = await Estabelecimento.findById(estabelecimentoId);
-        }
-        else if (donoId) {
+        } else if (donoId) {
             loja = await Estabelecimento.findOne({ donoId });
-        } 
-        else {
+            if (!loja) {
+                const usuario = await Usuario.findById(donoId);
+                if (usuario?.estabelecimentoId) {
+                    loja = await Estabelecimento.findById(usuario.estabelecimentoId);
+                }
+            }
+        } else {
             return res.status(401).json({ error: "Estabelecimento ou Usuário não identificado." });
         }
 
         if (!loja) {
-            return res.status(200).json({ nome: "Minha Loja" });
+            return res.status(404).json({ error: "Loja não encontrada." });
         }
 
         res.status(200).json(loja);
@@ -442,13 +453,16 @@ app.get('/estabelecimento/checar', async (req, res) => {
         const donoId = req.headers['x-usuario-id'];
         if (!donoId) return res.status(401).json({ error: "Usuário não identificado." });
 
-        const estabelecimento = await Estabelecimento.findOne({ donoId });
+        let estabelecimento = await Estabelecimento.findOne({ donoId });
 
-        if (estabelecimento) {
-            return res.status(200).json({ existe: true, estabelecimento });
-        } else {
-            return res.status(200).json({ existe: false });
+        if (!estabelecimento) {
+            const usuario = await Usuario.findById(donoId);
+            if (usuario?.estabelecimentoId) {
+                estabelecimento = await Estabelecimento.findById(usuario.estabelecimentoId);
+            }
         }
+
+        return res.status(200).json({ existe: !!estabelecimento, estabelecimento: estabelecimento || null });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import logoReBiteH from "../../assets/logoReBiteH.png";
+import { AuthContext } from "/src/context/AuthContext.jsx";
 
 function CadastrarLoja() {
   const [nomeLoja, setNomeLoja] = useState("");
   const [descricao, setDescricao] = useState("");
   const [endereco, setEndereco] = useState("");
   const navigate = useNavigate();
+  const { setUser } = useContext(AuthContext);
   const usuarioId = localStorage.getItem("usuarioId");
 
   async function handleCadastroLoja(e) {
@@ -23,6 +25,7 @@ function CadastrarLoja() {
       });
 
       if (response.ok) {
+        setUser((prev) => ({ ...prev, cargo: "admin" }));
         navigate("/painel-loja");
       } else {
         alert("Houve um problema ao salvar os dados da sua loja.");

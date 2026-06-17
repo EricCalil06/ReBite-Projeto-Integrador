@@ -8,7 +8,7 @@ import { Feather } from "@expo/vector-icons";
 import { useAuth } from "../context/AuthContext";
 
 export default function CadastrarLojaMobile() {
-  const { user } = useAuth();
+  const { user, atualizarUsuario } = useAuth();
   const [nomeLoja, setNomeLoja] = useState("");
   const [descricao, setDescricao] = useState("");
   const [endereco, setEndereco] = useState("");
@@ -32,6 +32,7 @@ export default function CadastrarLojaMobile() {
       });
 
       if (res.ok) {
+        atualizarUsuario({ cargo: "admin" });
         Alert.alert("Loja criada!", "Seu estabelecimento foi configurado.", [
           { text: "OK", onPress: () => router.replace("/painel-loja") }
         ]);

@@ -9,6 +9,26 @@ function NavBar() {
   const [menuAberto, setMenuAberto] = useState(false);
   const [inboxAberto, setInboxAberto] = useState(false);
   const [convites, setConvites] = useState([]);
+  const [temLoja, setTemLoja] = useState(null);
+
+  const checarLoja = async () => {
+    if (!user?.id || user.cargo !== "admin") return;
+    try {
+      const res = await fetch("http://localhost:5500/estabelecimento/checar", {
+        headers: { "x-usuario-id": user.id }
+      });
+      if (res.ok) {
+        const dados = await res.json();
+        setTemLoja(dados.existe);
+      }
+    } catch (err) {
+      console.error("Erro ao checar loja:", err);
+    }
+  };
+
+  useEffect(() => {
+    checarLoja();
+  }, [user]);
 
   const carregarConvites = async () => {
     if (!user || !user.id) return;
@@ -72,12 +92,27 @@ function NavBar() {
             <Link to="/" className="hover:text-[#F55D22] transition-colors">Início</Link>
             <Link to="/sobre" className="hover:text-[#F55D22] transition-colors">Sobre</Link>
             
-            {user && (
-              <Link 
-                to="/cadastro-lojista" 
-                className="hover:text-[#F55D22] transition-colors"
-              >
-                Cadastrar uma Loja
+            {user?.cargo === "funcionario" && (
+              <Link to="/painel-loja">
+                <button className="bg-gray-100 border border-gray-200 text-gray-800 px-4 py-2 font-bold rounded-xl hover:bg-gray-200 transition-colors text-sm">
+                  Acessar Painel
+                </button>
+              </Link>
+            )}
+
+            {user?.cargo === "cliente" && (
+              <Link to="/cadastrar-loja">
+                <button className="bg-gray-100 border border-gray-200 text-gray-800 px-4 py-2 font-bold rounded-xl hover:bg-gray-200 transition-colors text-sm">
+                  Cadastrar uma Loja
+                </button>
+              </Link>
+            )}
+
+            {user?.cargo === "admin" && temLoja !== null && (
+              <Link to={temLoja ? "/painel-loja" : "/cadastrar-loja"}>
+                <button className="bg-gray-100 border border-gray-200 text-gray-800 px-4 py-2 font-bold rounded-xl hover:bg-gray-200 transition-colors text-sm">
+                  {temLoja ? "Acessar Painel" : "Cadastrar uma Loja"}
+                </button>
               </Link>
             )}
           </div>

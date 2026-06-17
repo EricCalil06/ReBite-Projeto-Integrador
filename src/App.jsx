@@ -7,7 +7,7 @@ import Login from "./pages/Login/index.jsx";
 import Cadastro from "./pages/Cadastro/index.jsx";
 import Footer from "./components/Footer.jsx";
 import PaginaLojista from "./pages/PaginaParaLojistas/index.jsx"
-import Sacola from './pages/PaginaParaLojistas/sacola'; 
+//import Sacola from './pages/PaginaParaLojistas/sacola'; 
 import CadastrarLoja from "./pages/PaginaParaLojistas/CadastrarLoja.jsx";
 import PainelLoja from "./pages/PaginaParaLojistas/PainelLoja.jsx";
 import Debug from "./pages/Debug/index.jsx"
@@ -29,7 +29,7 @@ function App() {
 
           <Route path="/cadastro-lojista" element={<PaginaLojista />}/>
 
-          <Route path="/sacola" element={<Sacola />} />
+
           
           <Route path="/cadastrar-loja" element={<CadastrarLoja />} />
 
