@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import {
-  View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, Dimensions, ActivityIndicator
+  View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, Dimensions, ActivityIndicator, RefreshControl
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router"; 
@@ -34,40 +34,47 @@ export default function LojaScreen() {
   const [categoriasProdutos, setCategoriasProdutos] = useState([]);
   const [sacolas, setSacolas] = useState([]);
   const [carregando, setCarregando] = useState(true);
+  const [atualizando, setAtualizando] = useState(false);
+
+  const buscarDadosDaLoja = async () => {
+    try {
+      const lojaId = id; 
+      
+      const response = await fetch(`http://10.0.2.2:5500/estabelecimento/${lojaId}`);
+      
+      if (response.ok) {
+        const dados = await response.json();
+        
+        setLoja({
+          nome: dados.nome,
+          descricao: dados.descricao || "Sem descrição disponível.",
+          endereco: dados.endereco || "Endereço não informado",
+          avaliacao: dados.avaliacao || 4,
+          reviews: dados.reviews || 0,
+          distancia: dados.distancia || "1.2 km de você",
+        });
+
+        setCategoriasProdutos(dados.categoriasProdutos || []);
+        setSacolas(dados.sacolas || []);
+      } else {
+        console.error("Erro ao buscar dados da loja");
+      }
+    } catch (error) {
+      console.error("Erro de conexão com o servidor:", error);
+    } finally {
+      setCarregando(false);
+    }
+  };
 
   useEffect(() => {
-    async function buscarDadosDaLoja() {
-      try {
-        const lojaId = id; 
-        
-        const response = await fetch(`http://10.0.2.2:5500/estabelecimento/${lojaId}`);
-        
-        if (response.ok) {
-          const dados = await response.json();
-          
-          setLoja({
-            nome: dados.nome,
-            descricao: dados.descricao || "Sem descrição disponível.",
-            endereco: dados.endereco || "Endereço não informado",
-            avaliacao: dados.avaliacao || 4,
-            reviews: dados.reviews || 0,
-            distancia: dados.distancia || "1.2 km de você",
-          });
-
-          setCategoriasProdutos(dados.categoriasProdutos || []);
-          setSacolas(dados.sacolas || []);
-        } else {
-          console.error("Erro ao buscar dados da loja");
-        }
-      } catch (error) {
-        console.error("Erro de conexão com o servidor:", error);
-      } finally {
-        setCarregando(false);
-      }
-    }
-
     buscarDadosDaLoja();
   }, [id]);
+
+  const aoAtualizar = async () => {
+    setAtualizando(true);
+    await buscarDadosDaLoja();
+    setAtualizando(false);
+  };
 
   function adicionarAoCarrinho(item, e) {
     e.stopPropagation();
@@ -104,7 +111,17 @@ if (carregando) {
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+      <ScrollView 
+      style={styles.screen} 
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl 
+          refreshing={atualizando} 
+          onRefresh={aoAtualizar} 
+          colors={["#F05A28"]}
+        />
+      }
+    >
         <View style={styles.imagemContainer}>
           <Image source={imagemLojaPadrao} style={styles.imagemLoja} resizeMode="cover" />
           <TouchableOpacity style={styles.voltar} onPress={() => router.back()}>

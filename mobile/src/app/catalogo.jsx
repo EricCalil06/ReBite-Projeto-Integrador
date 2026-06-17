@@ -81,6 +81,51 @@ export default function Catalogo() {
     return limpo;
   }
 
+  function mascaraData(valor) {
+  const nums = valor.replace(/\D/g, "").slice(0, 8);
+  return nums
+    .replace(/^(\d{2})(\d)/, "$1/$2")
+    .replace(/^(\d{2})\/(\d{2})(\d)/, "$1/$2/$3");
+}
+
+function mascaraInteiro(valor) {
+  return valor.replace(/\D/g, "");
+}
+
+function mascaraDecimal(valor) {
+  let limpo = valor.replace(/[^0-9.,]/g, "");
+  limpo = limpo.replace(",", ".");
+  const partes = limpo.split(".");
+  if (partes.length > 2) {
+    limpo = partes[0] + "." + partes.slice(1).join("");
+  }
+  return limpo;
+}
+
+function dataValidaENaoAnterior(dataStr) {
+  const match = dataStr.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) return { valido: false, mensagem: "Data inválida. Use o formato DD/MM/AAAA." };
+
+  const [, dia, mes, ano] = match;
+  const dataDigitada = new Date(Number(ano), Number(mes) - 1, Number(dia));
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  if (
+    dataDigitada.getDate() !== Number(dia) ||
+    dataDigitada.getMonth() !== Number(mes) - 1 ||
+    dataDigitada.getFullYear() !== Number(ano)
+  ) {
+    return { valido: false, mensagem: "Data inexistente." };
+  }
+
+  if (dataDigitada < hoje) {
+    return { valido: false, mensagem: "A validade não pode ser uma data anterior a hoje." };
+  }
+
+  return { valido: true, mensagem: "" };
+}
+
   async function processarCodigo(codigo) {
     const codigoNormalizado = normalizarCodigo(codigo);
     
@@ -164,8 +209,17 @@ export default function Catalogo() {
       return;
     }
 
+    const validacaoData = dataValidaENaoAnterior(form.validade);
+    if (!validacaoData.valido) {
+      Alert.alert("Validade inválida", validacaoData.mensagem);
+      return;
+    }
+
     setSalvando(true);
     try {
+      const [dia, mes, ano] = form.validade.split("/");
+      const validadeISO = new Date(Number(ano), Number(mes) - 1, Number(dia)).toISOString();
+
       const res = await fetch("http://10.0.2.2:5500/produtos", {
         method: "POST",
         headers: {
@@ -177,7 +231,7 @@ export default function Catalogo() {
           ...form,
           preco: Number(form.preco),
           quantidade: Number(form.quantidade),
-          validade: converterDataParaISO(form.validade),
+          validade: validadeISO,
           peso: Number(form.peso) || 0,
         }),
       });
@@ -394,27 +448,39 @@ export default function Catalogo() {
 
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               {[
-                { label: "Nome *", key: "nome", placeholder: "Ex: Pão Francês" },
-                { label: "Descrição", key: "descricao", placeholder: "Opcional" },
-                { label: "Preço (R$) *", key: "preco", placeholder: "Ex: 4.50", keyboard: "numeric" },
-                { label: "Quantidade *", key: "quantidade", placeholder: "Ex: 10", keyboard: "numeric" },
-                { label: "Validade * (DD/MM/AAAA)", key: "validade", placeholder: "Ex: 30/06/2026" },
-                { label: "Alérgicos", key: "alertasAlergicos", placeholder: "Ex: Glúten, Lactose" },
-                { label: "Categoria *", key: "categoria", placeholder: "Ex: Pães, Doces" },
-                { label: "Peso (kg)", key: "peso", placeholder: "Ex: 0.5", keyboard: "numeric" },
-              ].map(({ label, key, placeholder, keyboard }) => (
-                <View key={key} style={styles.campoGroup}>
-                  <Text style={styles.campoLabel}>{label}</Text>
-                  <TextInput
-                    style={styles.campoInput}
-                    placeholder={placeholder}
-                    placeholderTextColor="#aaa"
-                    keyboardType={keyboard || "default"}
-                    value={form[key]}
-                    onChangeText={v => setForm(prev => ({ ...prev, [key]: v }))}
-                  />
-                </View>
-              ))}
+                { label: "Nome *", key: "nome", placeholder: "Ex: Pão Francês", tipo: "texto" },
+                { label: "Descrição", key: "descricao", placeholder: "Opcional", tipo: "texto" },
+                { label: "Preço (R$) *", key: "preco", placeholder: "Ex: 4.50", tipo: "decimal" },
+                { label: "Quantidade *", key: "quantidade", placeholder: "Ex: 10", tipo: "inteiro" },
+                { label: "Validade * (DD/MM/AAAA)", key: "validade", placeholder: "Ex: 30/06/2026", tipo: "data" },
+                { label: "Alérgicos", key: "alertasAlergicos", placeholder: "Ex: Glúten, Lactose", tipo: "texto" },
+                { label: "Categoria *", key: "categoria", placeholder: "Ex: Pães, Doces", tipo: "texto" },
+                { label: "Peso (kg)", key: "peso", placeholder: "Ex: 0.5", tipo: "decimal" },
+              ].map(({ label, key, placeholder, tipo }) => {
+                const aplicarMascara = (valor) => {
+                  if (tipo === "decimal") return mascaraDecimal(valor);
+                  if (tipo === "inteiro") return mascaraInteiro(valor);
+                  if (tipo === "data") return mascaraData(valor);
+                  return valor;
+                };
+
+                const teclado = tipo === "decimal" || tipo === "inteiro" || tipo === "data" ? "numeric" : "default";
+
+                return (
+                  <View key={key} style={styles.campoGroup}>
+                    <Text style={styles.campoLabel}>{label}</Text>
+                    <TextInput
+                      style={styles.campoInput}
+                      placeholder={placeholder}
+                      placeholderTextColor="#aaa"
+                      keyboardType={teclado}
+                      value={form[key]}
+                      onChangeText={(v) => setForm(prev => ({ ...prev, [key]: aplicarMascara(v) }))}
+                      maxLength={tipo === "data" ? 10 : undefined}
+                    />
+                  </View>
+                );
+              })}
 
               <View style={styles.campoGroup}>
                 <Text style={styles.campoLabel}>Tipo *</Text>

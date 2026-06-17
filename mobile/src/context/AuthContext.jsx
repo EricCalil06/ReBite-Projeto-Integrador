@@ -1,15 +1,43 @@
 import { createContext, useContext, useState } from "react";
 
 export const AuthContext = createContext();
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
 
   const login = (dadosUsuario) => setUser(dadosUsuario);
   const logout = () => setUser(null);
-  const atualizarUsuario = (dadosNovos) => setUser((prev) => ({ ...prev, ...dadosNovos }));
+
+  const atualizarUser = (dadosParciais) => {
+    setUser((prev) => (prev ? { ...prev, ...dadosParciais } : prev));
+  };
+
+  const refreshUser = async () => {
+    if (!user?.id) return;
+    try {
+      const res = await fetch(`http://10.0.2.2:5500/usuarios/${user.id}`, {
+        headers: { "x-usuario-id": user.id },
+      });
+      if (res.ok) {
+        const dadosAtualizados = await res.json();
+        setUser((prev) => ({ ...prev, ...dadosAtualizados }));
+      }
+    } catch (err) {
+      console.error("Erro ao atualizar usuário:", err);
+    }
+  };
 
   return (
-    <AuthContext.Provider value={{ user, logado: !!user, login, logout, atualizarUsuario }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        logado: !!user,
+        login,
+        logout,
+        atualizarUser,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

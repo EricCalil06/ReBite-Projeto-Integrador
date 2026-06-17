@@ -162,6 +162,18 @@ function PainelLoja() {
       alert("Data de validade inválida. Use o formato DD/MM/AAAA.");
       return;
     }
+
+    const dataProduto = new Date(validadeISO);
+    const dataHoje = new Date();
+    
+    dataHoje.setHours(0, 0, 0, 0);
+    dataProduto.setHours(0, 0, 0, 0);
+
+    if (dataProduto < dataHoje) {
+      alert("A validade não pode ser anterior à data de hoje.");
+      return;
+    }
+
     try {
       const res = await fetch("http://localhost:5500/produtos", {
         method: "POST",
@@ -224,7 +236,7 @@ function PainelLoja() {
   }
 
   async function removerFuncionario(id) {
-    if (!confirm("Deseja remover este funcionário? Ele voltará a ser cliente."))
+    if (!confirm("Deseja remover este funcionário?"))
       return;
 
     try {
