@@ -6,7 +6,7 @@ import { useFocusEffect } from 'expo-router';
 export default function CaixaEntrada() {
   const [convites, setConvites] = useState([]);
   const [atualizando, setAtualizando] = useState(false);
-  const { user } = useAuth();
+  const { user, atualizarUser } = useAuth();
 
   const carregarConvites = async () => {
     if (!user || !user.id) return;
@@ -36,7 +36,7 @@ export default function CaixaEntrada() {
     setAtualizando(false);
   };
 
-  const responderConvite = async (id, resposta) => {
+  const responderConvite = async (id, resposta, estabelecimentoId) => {
     try {
       const res = await fetch(`http://10.0.2.2:5500/convites/${id}/responder`, {
         method: 'POST',
@@ -48,6 +48,9 @@ export default function CaixaEntrada() {
       });
       
       if (res.ok) {
+        if (resposta === 'aceito') {
+          atualizarUser({ cargo: 'funcionario', estabelecimentoId });
+        }
         Alert.alert("Sucesso", `Convite ${resposta} com sucesso!`);
         carregarConvites();
       } else {
@@ -73,7 +76,7 @@ export default function CaixaEntrada() {
         </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.botao, styles.botaoAceitar]} 
-          onPress={() => responderConvite(item._id, 'aceito')}
+          onPress={() => responderConvite(item._id, 'aceito', item.estabelecimentoId)}
         >
           <Text style={styles.textoBotaoAceitar}>Aceitar</Text>
         </TouchableOpacity>
