@@ -81,7 +81,8 @@ function FormCadastro({ step, goToNextStep }) {
       return;
     }
 
-    if (formData.telefone.length < 10 || formData.telefone.length > 11) {
+    const telefoneSemMascara = formData.telefone.replace(/\D/g, "");
+    if (telefoneSemMascara.length < 10 || telefoneSemMascara.length > 11) {
       alert("Telefone deve ter 10 ou 11 dígitos (com DDD).");
       return;
     }
@@ -105,6 +106,7 @@ function FormCadastro({ step, goToNextStep }) {
       } else {
         const errorData = await response.json();
         console.error("Erro no cadastro:", errorData.error);
+        alert("Já existe esse CPF/CNPJ cadastrado.");
       }
     } catch (error) {
       console.error("Erro ao conectar:", error);
@@ -257,11 +259,11 @@ function FormCadastro({ step, goToNextStep }) {
                   <p className="text-sm text-gray-600">
                     <strong>Telefone:</strong> {formData.telefone}
                   </p>
-                </div>
 
-                <p className="text-sm text-gray-600">
-                  <strong>CPF/CNPJ:</strong> {formData.cpfCnpj}
-                </p>
+                  <p className="text-sm text-gray-600">
+                    <strong>CPF/CNPJ:</strong> {formData.cpfCnpj}
+                  </p>
+                </div>
 
                 <div className="flex items-center gap-2 px-2 mt-2">
                   <input

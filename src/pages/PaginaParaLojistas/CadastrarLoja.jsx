@@ -2,6 +2,7 @@ import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import logoReBiteH from "../../assets/logoReBiteH.png";
 import { AuthContext } from "/src/context/AuthContext.jsx";
+import SuccessModal from "../../components/SuccessModal";
 
 function CadastrarLoja() {
   const [nomeLoja, setNomeLoja] = useState("");
@@ -10,6 +11,7 @@ function CadastrarLoja() {
   const navigate = useNavigate();
   const { setUser } = useContext(AuthContext);
   const usuarioId = localStorage.getItem("usuarioId");
+  const [mostrarSucesso, setMostrarSucesso] = useState(false);
 
   async function handleCadastroLoja(e) {
     e.preventDefault();
