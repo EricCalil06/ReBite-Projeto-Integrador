@@ -60,15 +60,33 @@ function obterModelEstabelecimento() {
 
 async function obterEstabelecimento(req, res, next) {
     const donoId = req.headers['x-usuario-id'];
+    const estIdHeader = req.headers['x-estabelecimento-id'];
     console.log("middleware - donoId recebido:", donoId);
-    if (!donoId) return res.status(401).json({ error: "Usuário não identificado." });
-    
-    let est = await Estabelecimento.findOne({ donoId });
-    console.log("middleware - estabelecimento encontrado:", est?._id);
-    if (!est) {
-        est = new Estabelecimento({ nome: "Meu Estabelecimento Provisório", donoId });
-        await est.save();
+
+    if (!donoId && !estIdHeader) return res.status(401).json({ error: "Usuário não identificado." });
+
+    // 1. Se veio o estabelecimentoId direto no header, usa ele
+    if (estIdHeader) {
+        req.estabelecimentoId = estIdHeader;
+        return next();
     }
+
+    // 2. Busca o usuário para verificar se é funcionário
+    const usuario = await Usuario.findById(donoId);
+    if (!usuario) return res.status(404).json({ error: "Usuário não encontrado." });
+
+    // 3. Se for funcionário, usa o estabelecimentoId vinculado ao perfil dele
+    if (usuario.estabelecimentoId) {
+        req.estabelecimentoId = usuario.estabelecimentoId;
+        console.log("middleware - estabelecimento via funcionário:", usuario.estabelecimentoId);
+        return next();
+    }
+
+    // 4. Se for admin/dono, busca pelo donoId
+    const est = await Estabelecimento.findOne({ donoId: new mongoose.Types.ObjectId(donoId) });
+    console.log("middleware - estabelecimento encontrado:", est?._id);
+    if (!est) return res.status(404).json({ error: "Estabelecimento não encontrado." });
+
     req.estabelecimentoId = est._id;
     next();
 }

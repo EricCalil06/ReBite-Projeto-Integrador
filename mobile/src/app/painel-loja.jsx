@@ -24,11 +24,9 @@ export default function PainelLoja() {
 
   async function buscarLoja() {
     try {
-      const headers = isFuncionario
-        ? { "x-estabelecimento-id": user?.estabelecimentoId }
-        : { "x-usuario-id": user?.id };
-
-      const res = await fetch("http://10.0.2.2:5500/estabelecimento/perfil", { headers });
+      const res = await fetch("http://10.0.2.2:5500/estabelecimento/perfil", {
+        headers: { "x-usuario-id": user?.id } 
+      });
       if (res.ok) {
         const dados = await res.json();
         setLoja(dados);

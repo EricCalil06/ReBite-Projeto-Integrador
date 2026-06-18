@@ -20,7 +20,11 @@ export function AuthProvider({ children }) {
       });
       if (res.ok) {
         const dadosAtualizados = await res.json();
-        setUser((prev) => ({ ...prev, ...dadosAtualizados }));
+        setUser((prev) => ({
+          ...prev,
+          ...dadosAtualizados,
+          estabelecimentoId: dadosAtualizados.estabelecimentoId ?? prev?.estabelecimentoId // ← preserva se não vier da API
+        }));
       }
     } catch (err) {
       console.error("Erro ao atualizar usuário:", err);
