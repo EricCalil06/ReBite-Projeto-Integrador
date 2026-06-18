@@ -151,7 +151,10 @@ export default function Conta() {
           <section>
             <h2 className="text-xl font-bold text-gray-900 mb-4">Configurações</h2>
             <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-              <button className="w-full flex items-center gap-4 p-5 hover:bg-gray-50 transition-colors text-left">
+              <button
+                onClick={() => navigate("/alterar-senha")}
+                className="w-full flex items-center gap-4 p-5 hover:bg-gray-50 transition-colors text-left"
+              >
                 <Shield size={24} className="text-gray-700" />
                 <span className="text-base font-medium text-gray-900">Segurança e Privacidade</span>
               </button>

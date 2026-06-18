@@ -12,6 +12,7 @@ import CadastrarLoja from "./pages/PaginaParaLojistas/CadastrarLoja.jsx";
 import PainelLoja from "./pages/PaginaParaLojistas/PainelLoja.jsx";
 import Debug from "./pages/Debug/index.jsx"
 import Conta from "./pages/Conta/index.jsx";
+import AlterarSenha from "./pages/alterarSenha/AlterarSenha";
 
 function App() {
   return (
@@ -29,7 +30,7 @@ function App() {
 
           <Route path="/cadastro-lojista" element={<PaginaLojista />}/>
 
-
+          <Route path="/alterar-senha" element={<AlterarSenha />} />
           
           <Route path="/cadastrar-loja" element={<CadastrarLoja />} />
 
