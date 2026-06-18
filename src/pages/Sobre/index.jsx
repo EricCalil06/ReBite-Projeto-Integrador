@@ -1,6 +1,8 @@
 import imagemPosterInicio from "../../assets/imagemPosterInicio.png";
+import { useNavigate } from "react-router-dom";
 
 function Sobre() {
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900">
@@ -98,7 +100,9 @@ function Sobre() {
               <p className="text-gray-600 mb-8 max-w-sm">
                 Não jogue mais o seu lucro no lixo. Cadastre seu estabelecimento de forma gratuita, recupere seus custos e atraia novos clientes para a sua loja.
               </p>
-              <button className="bg-gray-900 hover:bg-black text-white font-bold py-3 px-8 rounded-xl transition-colors">
+              <button 
+              onClick={() => navigate("/cadastro-lojista")}
+              className="bg-gray-900 hover:bg-black text-white font-bold py-3 px-8 rounded-xl transition-colors">
                 CADASTRAR MINHA LOJA
               </button>
             </div>
