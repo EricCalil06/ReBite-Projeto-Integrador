@@ -29,14 +29,15 @@ export default function Catalogo() {
   const [permissao, solicitarPermissao] = useCameraPermissions();
   const [form, setForm] = useState(FORM_VAZIO);
   const [salvando, setSalvando] = useState(false);
+  const [produtoEditando, setProdutoEditando] = useState(null);
 
   useEffect(() => {
     buscarProdutos();
   }, []);
 
   function converterDataParaISO(dataBR) {
-  const [dia, mes, ano] = dataBR.split("/");
-  return new Date(`${ano}-${mes}-${dia}`).toISOString();
+    const [dia, mes, ano] = dataBR.split("/");
+    return new Date(`${ano}-${mes}-${dia}`).toISOString();
   }
 
   async function buscarProdutos() {
@@ -82,56 +83,56 @@ export default function Catalogo() {
   }
 
   function mascaraData(valor) {
-  const nums = valor.replace(/\D/g, "").slice(0, 8);
-  return nums
-    .replace(/^(\d{2})(\d)/, "$1/$2")
-    .replace(/^(\d{2})\/(\d{2})(\d)/, "$1/$2/$3");
-}
-
-function mascaraInteiro(valor) {
-  return valor.replace(/\D/g, "");
-}
-
-function mascaraDecimal(valor) {
-  let limpo = valor.replace(/[^0-9.,]/g, "");
-  limpo = limpo.replace(",", ".");
-  const partes = limpo.split(".");
-  if (partes.length > 2) {
-    limpo = partes[0] + "." + partes.slice(1).join("");
-  }
-  return limpo;
-}
-
-function dataValidaENaoAnterior(dataStr) {
-  const match = dataStr.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (!match) return { valido: false, mensagem: "Data inválida. Use o formato DD/MM/AAAA." };
-
-  const [, dia, mes, ano] = match;
-  const dataDigitada = new Date(Number(ano), Number(mes) - 1, Number(dia));
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-
-  if (
-    dataDigitada.getDate() !== Number(dia) ||
-    dataDigitada.getMonth() !== Number(mes) - 1 ||
-    dataDigitada.getFullYear() !== Number(ano)
-  ) {
-    return { valido: false, mensagem: "Data inexistente." };
+    const nums = valor.replace(/\D/g, "").slice(0, 8);
+    return nums
+      .replace(/^(\d{2})(\d)/, "$1/$2")
+      .replace(/^(\d{2})\/(\d{2})(\d)/, "$1/$2/$3");
   }
 
-  if (dataDigitada < hoje) {
-    return { valido: false, mensagem: "A validade não pode ser uma data anterior a hoje." };
+  function mascaraInteiro(valor) {
+    return valor.replace(/\D/g, "");
   }
 
-  return { valido: true, mensagem: "" };
-}
+  function mascaraDecimal(valor) {
+    let limpo = valor.replace(/[^0-9.,]/g, "");
+    limpo = limpo.replace(",", ".");
+    const partes = limpo.split(".");
+    if (partes.length > 2) {
+      limpo = partes[0] + "." + partes.slice(1).join("");
+    }
+    return limpo;
+  }
+
+  function dataValidaENaoAnterior(dataStr) {
+    const match = dataStr.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!match) return { valido: false, mensagem: "Data inválida. Use o formato DD/MM/AAAA." };
+
+    const [, dia, mes, ano] = match;
+    const dataDigitada = new Date(Number(ano), Number(mes) - 1, Number(dia));
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    if (
+      dataDigitada.getDate() !== Number(dia) ||
+      dataDigitada.getMonth() !== Number(mes) - 1 ||
+      dataDigitada.getFullYear() !== Number(ano)
+    ) {
+      return { valido: false, mensagem: "Data inexistente." };
+    }
+
+    if (dataDigitada < hoje) {
+      return { valido: false, mensagem: "A validade não pode ser uma data anterior a hoje." };
+    }
+
+    return { valido: true, mensagem: "" };
+  }
 
   async function processarCodigo(codigo) {
     const codigoNormalizado = normalizarCodigo(codigo);
-    
+
     if (codigoNormalizado.length !== 13 && codigoNormalizado.length !== 8) {
       console.log("Leitura inválida rejeitada (tamanho incorreto):", codigoNormalizado);
-      return; 
+      return;
     }
 
     console.log("CODIGO ORIGINAL:", codigo, "| CODIGO NORMALIZADO:", codigoNormalizado);
@@ -164,7 +165,7 @@ function dataValidaENaoAnterior(dataStr) {
               onPress: () => {
                 setModalAutomaticoVisivel(true);
                 setCodigoBarras("");
-                setCameraAtiva(false); 
+                setCameraAtiva(false);
               }
             },
             {
@@ -252,6 +253,55 @@ function dataValidaENaoAnterior(dataStr) {
     }
   }
 
+  async function atualizarProduto() {
+    if (!form.nome || !form.preco || !form.quantidade || !form.validade || !form.categoria) {
+      Alert.alert("Campos obrigatórios", "Preencha nome, preço, quantidade, validade e categoria.");
+      return;
+    }
+
+    const validacaoData = dataValidaENaoAnterior(form.validade);
+    if (!validacaoData.valido) {
+      Alert.alert("Validade inválida", validacaoData.mensagem);
+      return;
+    }
+
+    setSalvando(true);
+    try {
+      const [dia, mes, ano] = form.validade.split("/");
+      const validadeISO = new Date(Number(ano), Number(mes) - 1, Number(dia)).toISOString();
+
+      const res = await fetch(`http://10.0.2.2:5500/produtos/${produtoEditando._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "x-usuario-id": user?.id,
+        },
+        body: JSON.stringify({
+          ...form,
+          preco: Number(form.preco),
+          quantidade: Number(form.quantidade),
+          validade: validadeISO,
+          peso: Number(form.peso) || 0,
+        }),
+      });
+
+      if (res.ok) {
+        Alert.alert("Sucesso!", "Produto atualizado.");
+        setModalVisivel(false);
+        setProdutoEditando(null);
+        setForm(FORM_VAZIO);
+        buscarProdutos();
+      } else {
+        const erro = await res.json();
+        Alert.alert("Erro", erro.error || "Não foi possível atualizar.");
+      }
+    } catch (err) {
+      Alert.alert("Erro de conexão", "Verifique o servidor.");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
   async function excluirSelecionados() {
     if (selecionados.length === 0) {
       Alert.alert("Nenhum item selecionado", "Selecione ao menos um produto.");
@@ -313,7 +363,7 @@ function dataValidaENaoAnterior(dataStr) {
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.cadastroBtn, styles.cadastroBtnOutline]}
-            onPress={() => { setForm(FORM_VAZIO); setModalVisivel(true); }}
+            onPress={() => { setForm(FORM_VAZIO); setProdutoEditando(null); setModalVisivel(true); }}
           >
             <Feather name="edit-3" size={16} color="#F05A28" style={{ marginRight: 6 }} />
             <Text style={[styles.cadastroBtnTexto, { color: "#F05A28" }]}>Manual</Text>
@@ -344,11 +394,28 @@ function dataValidaENaoAnterior(dataStr) {
                 <View style={[styles.radio, selecionado && styles.radioSelecionado]} />
               </TouchableOpacity>
               <Text style={styles.produtoNome}>{item.nome || "Produto"}</Text>
-              <TouchableOpacity style={styles.iconeBtn}>
+              <TouchableOpacity
+                style={styles.iconeBtn}
+                onPress={() => {
+                  const d = new Date(item.validade);
+                  const validade = `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+                  setForm({
+                    nome: item.nome || "",
+                    descricao: item.descricao || "",
+                    preco: String(item.preco || ""),
+                    quantidade: String(item.quantidade || ""),
+                    validade,
+                    alertasAlergicos: item.alertasAlergicos || "",
+                    categoria: item.categoria || "",
+                    tipo: item.tipo || "avulso",
+                    peso: String(item.peso || ""),
+                    imagem: item.imagem || "",
+                  });
+                  setProdutoEditando(item);
+                  setModalVisivel(true);
+                }}
+              >
                 <Feather name="edit-2" size={18} color="#555" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.iconeBtn}>
-                <Feather name="trash-2" size={18} color="#F05A28" />
               </TouchableOpacity>
             </View>
           );
@@ -370,7 +437,6 @@ function dataValidaENaoAnterior(dataStr) {
               </TouchableOpacity>
             </View>
 
-            {/* O ScrollView agora envolve todo o conteúdo para permitir a rolagem quando o teclado subir */}
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               {cameraAtiva && permissao?.granted ? (
                 <View style={styles.cameraContainer}>
@@ -379,11 +445,7 @@ function dataValidaENaoAnterior(dataStr) {
                     facing="back"
                     onBarcodeScanned={handleBarcodeScanned}
                     barcodeScannerSettings={{
-                      barcodeTypes: [
-                        "ean13", "ean8",       
-                        "code128", "code39",   
-                        "qr"                   
-                      ], 
+                      barcodeTypes: ["ean13", "ean8", "code128", "code39", "qr"],
                     }}
                   />
                   <TouchableOpacity style={styles.fecharCamera} onPress={() => setCameraAtiva(false)}>
@@ -431,17 +493,19 @@ function dataValidaENaoAnterior(dataStr) {
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* MODAL 2: FORMULÁRIO MANUAL / NOVO PRODUTO */}
+      {/* MODAL 2: FORMULÁRIO MANUAL / EDITAR PRODUTO */}
       <Modal visible={modalVisivel} animationType="slide" transparent>
         <KeyboardAvoidingView
           style={styles.modalOverlay}
-          behavior="padding" 
-          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20} 
+          behavior="padding"
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         >
           <View style={styles.modalBox}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitulo}>Novo Produto</Text>
-              <TouchableOpacity onPress={() => { setModalVisivel(false); setForm(FORM_VAZIO); }}>
+              <Text style={styles.modalTitulo}>
+                {produtoEditando ? "Editar Produto" : "Novo Produto"}
+              </Text>
+              <TouchableOpacity onPress={() => { setModalVisivel(false); setForm(FORM_VAZIO); setProdutoEditando(null); }}>
                 <Feather name="x" size={22} color="#111" />
               </TouchableOpacity>
             </View>
@@ -501,12 +565,14 @@ function dataValidaENaoAnterior(dataStr) {
 
               <TouchableOpacity
                 style={[styles.cadastroBtn, { marginTop: 20, marginBottom: 30, opacity: salvando ? 0.6 : 1 }]}
-                onPress={cadastrarProduto}
+                onPress={produtoEditando ? atualizarProduto : cadastrarProduto}
                 disabled={salvando}
               >
                 {salvando
                   ? <ActivityIndicator size="small" color="#fff" />
-                  : <Text style={styles.cadastroBtnTexto}>Cadastrar Produto</Text>
+                  : <Text style={styles.cadastroBtnTexto}>
+                      {produtoEditando ? "Salvar Alterações" : "Cadastrar Produto"}
+                    </Text>
                 }
               </TouchableOpacity>
             </ScrollView>
@@ -526,7 +592,6 @@ const styles = StyleSheet.create({
   titulo: { fontSize: 26, fontWeight: "bold", color: "#111" },
   abaAtiva: { backgroundColor: "#FFE8DF", marginHorizontal: 20, borderRadius: 12, paddingVertical: 12, alignItems: "center", marginBottom: 20 },
   abaTexto: { color: "#F05A28", fontWeight: "bold", fontSize: 15 },
-
   cadastroRow: { paddingHorizontal: 20, marginBottom: 12 },
   cadastroTitulo: { fontSize: 20, fontWeight: "bold", color: "#111", marginBottom: 10 },
   cadastroBtns: { flexDirection: "row", gap: 12, width: "100%" },
@@ -534,7 +599,6 @@ const styles = StyleSheet.create({
   cadastroBtnAutomatico: {},
   cadastroBtnOutline: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#F05A28" },
   cadastroBtnTexto: { color: "#fff", fontWeight: "bold", fontSize: 14 },
-
   lista: { paddingHorizontal: 20, paddingBottom: 40 },
   produtoRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14 },
   radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: "#ccc" },
